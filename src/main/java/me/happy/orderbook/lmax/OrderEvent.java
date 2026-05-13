@@ -1,5 +1,6 @@
 package me.happy.orderbook.lmax;
 
+import io.netty.channel.Channel;
 import lombok.Data;
 import me.happy.orderbook.order.Side;
 
@@ -7,6 +8,8 @@ import me.happy.orderbook.order.Side;
 public class OrderEvent {
 
     private long ticker;
+    private boolean snapshot = false;
+    private Channel channel;
     private Side side;
     private int price;
     private int quantity;

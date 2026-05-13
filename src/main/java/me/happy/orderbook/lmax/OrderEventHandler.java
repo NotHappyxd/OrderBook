@@ -4,6 +4,7 @@ import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.Sequence;
 import lombok.Getter;
 import me.happy.orderbook.engine.OrderBook;
+import me.happy.orderbook.engine.OrderSnapshot;
 import me.happy.orderbook.order.Order;
 
 import java.util.HashMap;
@@ -26,7 +27,31 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
 
     @Override
     public void onEvent(OrderEvent event, long sequence, boolean endOfBatch) {
-        Order order = orderAllocator.getOrder();
+        if (event.isSnapshot()) {
+            processSnapshot(event);
+        }else {
+            processOrder(event);
+        }
+
+        System.out.println(sequence);
+    }
+
+    @Override
+    public void setSequenceCallback(Sequence sequenceCallback) {
+        EventHandler.super.setSequenceCallback(sequenceCallback);
+    }
+
+    private void processSnapshot(OrderEvent event) {
+        OrderBook orderBook = orderBookMap.get(event.getTicker());
+        OrderSnapshot snapshot = new OrderSnapshot(event.getTicker());
+
+        orderBook.fillSnapshot(snapshot, 5);
+
+        event.getChannel().writeAndFlush(snapshot);
+    }
+
+    private void processOrder(OrderEvent event) {
+        Order order = orderAllocator.borrow();
 
         order.setSide(event.getSide());
         order.setId((++this.sequence * shardCount) + shardId);
@@ -41,10 +66,5 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
         }
 
         orderBook.process(order);
-    }
-
-    @Override
-    public void setSequenceCallback(Sequence sequenceCallback) {
-        EventHandler.super.setSequenceCallback(sequenceCallback);
     }
 }

@@ -2,6 +2,7 @@ package me.happy.orderbook.lmax;
 
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.util.DaemonThreadFactory;
+import io.netty.channel.Channel;
 import lombok.Getter;
 import me.happy.orderbook.order.Side;
 
@@ -34,6 +35,16 @@ public class Exchange {
             event.setSide(side);
             event.setPrice(price);
             event.setQuantity(quantity);
+        });
+    }
+
+    public void processSnapshot(long ticker, Channel channel) {
+        int shard = Math.toIntExact(Math.abs(ticker % shardCount));
+
+        disruptors[shard].getRingBuffer().publishEvent((event, sequence) -> {
+            event.setSnapshot(true);
+            event.setTicker(ticker);
+            event.setChannel(channel);
         });
     }
 }

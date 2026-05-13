@@ -16,7 +16,7 @@ public class OrderAllocator {
         }
     }
 
-    public Order getOrder() {
+    public Order borrow() {
         Order order = orders.pollFirst();
 
         if (order == null) {

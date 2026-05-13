@@ -22,7 +22,7 @@ public class Main {
         for (int i = 0; i < 4; i++) {
             Thread thread = new Thread(() -> {
                 int orders = 0;
-                while (++orders < 10000) {
+                while (++orders <= 10000) {
                     exchange.process(packString("APPL"), ThreadLocalRandom.current().nextBoolean() ? Side.BUY : Side.SELL, ThreadLocalRandom.current().nextInt(0, 100), ThreadLocalRandom.current().nextInt(0, 100));
                 }
             });
@@ -36,7 +36,7 @@ public class Main {
             thread.join();
         }
 
-        Thread.sleep(10000L);
+        Thread.sleep(1000L);
         for (OrderEventHandler handler : exchange.getHandlers()) {
             for (Map.Entry<Long, OrderBook> entry : handler.getOrderBookMap().entrySet()) {
                 System.out.println(unpack(entry.getKey()) + " " + entry.getValue().getBids());
