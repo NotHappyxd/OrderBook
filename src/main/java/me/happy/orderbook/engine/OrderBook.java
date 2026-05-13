@@ -12,8 +12,8 @@ import java.util.TreeMap;
 @Getter
 public class OrderBook {
 
-    private final TreeMap<Integer, PriceBucket> bids = new TreeMap<>(Comparator.reverseOrder());
-    private final TreeMap<Integer, PriceBucket> asks = new TreeMap<>();
+    private final TreeMap<Integer, PriceLevel> bids = new TreeMap<>(Comparator.reverseOrder());
+    private final TreeMap<Integer, PriceLevel> asks = new TreeMap<>();
     private final OrderAllocator orderAllocator;
 
     public OrderBook(OrderAllocator orderAllocator) {
@@ -33,10 +33,10 @@ public class OrderBook {
 
     public void addToBook(Order order) {
         if (order.getSide() == Side.BUY) {
-            bids.computeIfAbsent(order.getPrice(), _ -> new PriceBucket())
+            bids.computeIfAbsent(order.getPrice(), _ -> new PriceLevel())
                     .addOrder(order);
         } else {
-            asks.computeIfAbsent(order.getPrice(), _ -> new PriceBucket())
+            asks.computeIfAbsent(order.getPrice(), _ -> new PriceLevel())
                     .addOrder(order);
         }
     }
@@ -47,8 +47,8 @@ public class OrderBook {
 
             if (bestPrice > order.getPrice()) break;
 
-            PriceBucket priceBucket = asks.get(bestPrice);
-            Deque<Order> sellOrders = priceBucket.getOrders();
+            PriceLevel priceLevel = asks.get(bestPrice);
+            Deque<Order> sellOrders = priceLevel.getOrders();
 
             while (!sellOrders.isEmpty() && order.getQuantity() > 0) {
                 Order sellOrder = sellOrders.peekFirst();
@@ -57,7 +57,7 @@ public class OrderBook {
 
                 sellOrder.setQuantity(sellOrder.getQuantity() - traded);
                 order.setQuantity(order.getQuantity() - traded);
-                priceBucket.setTotalQuantity(priceBucket.getTotalQuantity() - traded);
+                priceLevel.setTotalQuantity(priceLevel.getTotalQuantity() - traded);
 
                 if (sellOrder.getQuantity() == 0) {
                     sellOrders.pollFirst();
@@ -77,8 +77,8 @@ public class OrderBook {
 
             if (bestBuyPrice < order.getPrice()) break;
 
-            PriceBucket priceBucket = bids.get(bestBuyPrice);
-            Deque<Order> buyOrders = priceBucket.getOrders();
+            PriceLevel priceLevel = bids.get(bestBuyPrice);
+            Deque<Order> buyOrders = priceLevel.getOrders();
 
             while (!buyOrders.isEmpty() && order.getQuantity() > 0) {
                 Order buyOrder = buyOrders.peekFirst();
@@ -87,7 +87,7 @@ public class OrderBook {
 
                 buyOrder.setQuantity(buyOrder.getQuantity() - traded);
                 order.setQuantity(order.getQuantity() - traded);
-                priceBucket.setTotalQuantity(priceBucket.getTotalQuantity() - traded);
+                priceLevel.setTotalQuantity(priceLevel.getTotalQuantity() - traded);
 
                 if (buyOrder.getQuantity() == 0) {
                     buyOrders.pollFirst();

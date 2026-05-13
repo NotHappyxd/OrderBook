@@ -52,8 +52,10 @@ public class Main {
         for (int i = 7; i >= 0; i--) {
             char code = (char) ((value >> (i * 8)) & 0xFF);
 
-            if (code != 0)
-                result.append(code);
+            if (code == 0)
+                break;
+
+            result.append(code);
         }
 
         return result.toString();

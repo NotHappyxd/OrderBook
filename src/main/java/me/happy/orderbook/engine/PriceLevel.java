@@ -7,7 +7,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 @Data
-public class PriceBucket {
+public class PriceLevel {
 
     private Deque<Order> orders = new ArrayDeque<>();
     private int totalQuantity = 0;
