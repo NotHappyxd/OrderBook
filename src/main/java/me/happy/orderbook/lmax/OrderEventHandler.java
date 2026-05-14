@@ -28,7 +28,7 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
     @Override
     public void onEvent(OrderEvent event, long sequence, boolean endOfBatch) {
         if (event.isSnapshot()) {
-            processSnapshot(event);
+            processSnapshot(event, sequence);
         }else {
             processOrder(event);
         }
@@ -41,11 +41,14 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
         EventHandler.super.setSequenceCallback(sequenceCallback);
     }
 
-    private void processSnapshot(OrderEvent event) {
+    private void processSnapshot(OrderEvent event, long sequence) {
         OrderBook orderBook = orderBookMap.get(event.getTicker());
         OrderSnapshot snapshot = new OrderSnapshot(event.getTicker());
+        snapshot.setSequenceId(sequence);
 
-        orderBook.fillSnapshot(snapshot, 5);
+        if (orderBook != null) {
+            orderBook.fillSnapshot(snapshot, 5);
+        }
 
         event.getChannel().writeAndFlush(snapshot);
     }

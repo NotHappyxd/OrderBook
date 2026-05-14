@@ -12,7 +12,8 @@ public class OrderDecoder extends ReplayingDecoder<State> {
     private Exchange exchange;
     private byte operation;
 
-    public OrderDecoder() {
+    public OrderDecoder(Exchange exchange) {
+        this.exchange = exchange;
         super(State.READ_OPERATION); // Start by looking for the type
     }
 

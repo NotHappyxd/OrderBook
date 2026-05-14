@@ -8,7 +8,9 @@ import me.happy.orderbook.engine.OrderSnapshot;
 public class OrderSnapshotEncoder extends MessageToByteEncoder<OrderSnapshot> {
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext, OrderSnapshot snapshot, ByteBuf byteBuf) throws Exception {
+        // Long (Ticker), Byte (Length), (Bid Price, Bid Amount), (Ask Price, Ask Amount)
         byteBuf.writeLong(snapshot.getTicker());
+        byteBuf.writeLong(snapshot.getSequenceId());
         byteBuf.writeByte(5); // Depth of orders
 
         for (int i = 0; i < 5; i++) {
