@@ -8,7 +8,10 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.timeout.ReadTimeoutHandler;
 import me.happy.orderbook.lmax.Exchange;
+
+import java.util.concurrent.TimeUnit;
 
 public class ExchangeServer {
 
@@ -18,7 +21,7 @@ public class ExchangeServer {
         this.port = port;
     }
 
-    private void startServer(Exchange exchange) throws Exception{
+    public void startServer(Exchange exchange) throws Exception{
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
@@ -30,6 +33,8 @@ public class ExchangeServer {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
+                            socketChannel.pipeline().addLast(new LoginHandler(exchange));
+                            socketChannel.pipeline().addLast(new ReadTimeoutHandler(5, TimeUnit.MINUTES));
                             socketChannel.pipeline().addLast(new OrderDecoder(exchange));
                             socketChannel.pipeline().addLast(new OrderSnapshotEncoder());
                         }

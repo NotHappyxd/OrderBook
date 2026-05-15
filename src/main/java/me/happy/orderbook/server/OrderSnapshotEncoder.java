@@ -9,6 +9,7 @@ public class OrderSnapshotEncoder extends MessageToByteEncoder<OrderSnapshot> {
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext, OrderSnapshot snapshot, ByteBuf byteBuf) throws Exception {
         // Long (Ticker), Byte (Length), (Bid Price, Bid Amount), (Ask Price, Ask Amount)
+        byteBuf.writeByte(0x06);
         byteBuf.writeLong(snapshot.getTicker());
         byteBuf.writeLong(snapshot.getSequenceId());
         byteBuf.writeByte(5); // Depth of orders

@@ -1,6 +1,7 @@
 package me.happy.orderbook.engine;
 
 import lombok.Getter;
+import me.happy.orderbook.lmax.Exchange;
 import me.happy.orderbook.lmax.OrderAllocator;
 import me.happy.orderbook.order.Order;
 import me.happy.orderbook.order.Side;
@@ -15,12 +16,16 @@ public class OrderBook {
     private final TreeMap<Integer, PriceLevel> bids = new TreeMap<>(Comparator.reverseOrder());
     private final TreeMap<Integer, PriceLevel> asks = new TreeMap<>();
     private final OrderAllocator orderAllocator;
+    private final long ticker;
 
-    public OrderBook(OrderAllocator orderAllocator) {
+    public OrderBook(OrderAllocator orderAllocator, long ticker) {
         this.orderAllocator = orderAllocator;
+        this.ticker = ticker;
     }
 
     public void process(Order order) {
+        System.out.println("Processing " + order.getSide().name() + " for $" + order.getPrice() + " @ " + order.getQuantity());
+
         if (order.getSide() == Side.BUY) {
             matchBuy(order);
         } else {
@@ -63,6 +68,8 @@ public class OrderBook {
                     sellOrders.pollFirst();
                     orderAllocator.release(sellOrder);
                 }
+
+                Exchange.getInstance().publishFill(ticker, order.getId(), sellOrder.getId(), order.getPrice(), traded, sellOrder.getSide());
             }
 
             if (sellOrders.isEmpty()) {
@@ -93,6 +100,8 @@ public class OrderBook {
                     buyOrders.pollFirst();
                     orderAllocator.release(buyOrder);
                 }
+
+                Exchange.getInstance().publishFill(ticker, order.getId(), buyOrder.getId(), order.getPrice(), traded, buyOrder.getSide());
             }
 
             if (buyOrders.isEmpty()) {

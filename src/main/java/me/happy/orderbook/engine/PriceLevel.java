@@ -14,6 +14,6 @@ public class PriceLevel {
 
     public void addOrder(Order order) {
         orders.addLast(order);
-        totalQuantity += order.getPrice();
+        totalQuantity += order.getQuantity();
     }
 }

@@ -21,18 +21,18 @@ public class OrderDecoder extends ReplayingDecoder<State> {
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) throws Exception {
         switch (state()) {
             case READ_OPERATION -> {
-                operation =  byteBuf.readByte();
+                operation = byteBuf.readByte();
                 checkpoint(State.READ_PAYLOAD);
             }
 
             case READ_PAYLOAD -> {
                 if (operation == 0x01) { // Market Order
-                    long tickerId =  byteBuf.readLong();
+                    long tickerId = byteBuf.readLong();
                     byte orderType = byteBuf.readByte();
                     int price = byteBuf.readInt();
                     int quantity = byteBuf.readInt();
 
-                    exchange.process(tickerId, orderType == 0x01 ? Side.BUY : Side.SELL, price, quantity);
+                    exchange.process(tickerId, orderType == 0x01 ? Side.BUY : Side.SELL, price, quantity, channelHandlerContext.channel());
                 }else if (operation == 0x02) {
                     // TODO: Implement snapshot logic
                     long tickerId =  byteBuf.readLong();
