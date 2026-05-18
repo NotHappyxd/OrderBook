@@ -24,8 +24,6 @@ public class OrderBook {
     }
 
     public void process(Order order) {
-        System.out.println("Processing " + order.getSide().name() + " for $" + order.getPrice() + " @ " + order.getQuantity());
-
         if (order.getSide() == Side.BUY) {
             matchBuy(order);
         } else {

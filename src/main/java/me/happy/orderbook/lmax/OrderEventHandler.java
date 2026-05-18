@@ -3,7 +3,6 @@ package me.happy.orderbook.lmax;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.Sequence;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import lombok.Getter;
 import me.happy.orderbook.engine.OrderBook;
 import me.happy.orderbook.engine.OrderSnapshot;
@@ -35,6 +34,10 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
             processOrder(event);
         }
 
+        if (endOfBatch) {
+            event.getChannel().flush();
+        }
+
         System.out.println(sequence);
     }
 
@@ -44,7 +47,6 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
     }
 
     private void processSnapshot(OrderEvent event, long sequence) {
-        System.out.println("Processing " + sequence);
         OrderBook orderBook = orderBookMap.get(event.getTicker());
         OrderSnapshot snapshot = new OrderSnapshot(event.getTicker());
         snapshot.setSequenceId(sequence);
@@ -72,10 +74,10 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
         }
 
         // Acknowledge
-        ByteBuf byteBuf = ByteBufAllocator.DEFAULT.buffer(33);
+        ByteBuf byteBuf = event.getChannel().alloc().buffer(33);
         byteBuf.writeByte(0x07);
         byteBuf.writeLong(order.getId());
-        event.getChannel().writeAndFlush(byteBuf);
+        event.getChannel().write(byteBuf);
 
         orderBook.process(order);
     }
