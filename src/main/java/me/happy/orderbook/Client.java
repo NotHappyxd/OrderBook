@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Client {
 
-    public static void main(String[] args) throws Exception {
+    static void main(String[] args) throws Exception {
         EventLoopGroup group = new NioEventLoopGroup();
 
         try {
@@ -70,7 +70,7 @@ class ExchangeClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
             System.out.println("Order Acknowledgement Received for order " + in.readLong());
 
-        }else if (operation == 6) {
+        } else if (operation == 6) {
             in.readByte();
 
             long ticker = in.readLong();
@@ -87,7 +87,7 @@ class ExchangeClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
             for (int i = 0; i < depth; i++) {
                 System.out.printf("  Ask: Price %d | Qty %d%n", in.readInt(), in.readInt());
             }
-        }else if (operation == 3) {
+        } else if (operation == 3) {
             in.readByte();
 
             long tickerId = in.readLong();

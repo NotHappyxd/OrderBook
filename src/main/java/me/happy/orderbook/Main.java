@@ -7,7 +7,7 @@ import me.happy.orderbook.server.ExchangeServer;
 public class Main {
 
     @SneakyThrows
-    public static void main(String[] args) {
+    static void main(String[] args) {
         Exchange exchange = new Exchange(4);
         ExchangeServer server = new ExchangeServer(8080);
         server.startServer(exchange);

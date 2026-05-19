@@ -9,7 +9,7 @@ import me.happy.orderbook.order.Side;
 import java.util.List;
 
 public class OrderDecoder extends ReplayingDecoder<State> {
-    private Exchange exchange;
+    private final Exchange exchange;
     private byte operation;
 
     public OrderDecoder(Exchange exchange) {
@@ -33,9 +33,9 @@ public class OrderDecoder extends ReplayingDecoder<State> {
                     int quantity = byteBuf.readInt();
 
                     exchange.process(tickerId, orderType == 0x01 ? Side.BUY : Side.SELL, price, quantity, channelHandlerContext.channel());
-                }else if (operation == 0x02) {
+                } else if (operation == 0x02) {
                     // TODO: Implement snapshot logic
-                    long tickerId =  byteBuf.readLong();
+                    long tickerId = byteBuf.readLong();
 
                     exchange.processSnapshot(tickerId, channelHandlerContext.channel());
                 }

@@ -15,13 +15,13 @@ import java.util.concurrent.TimeUnit;
 
 public class ExchangeServer {
 
-    private int port;
+    private final int port;
 
     public ExchangeServer(int port) {
         this.port = port;
     }
 
-    public void startServer(Exchange exchange) throws Exception{
+    public void startServer(Exchange exchange) throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
@@ -45,7 +45,7 @@ public class ExchangeServer {
             System.out.println("Exchange Server started on port " + port);
             ChannelFuture future = bootstrap.bind(port).sync();
             future.channel().closeFuture().sync();
-        }finally {
+        } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }

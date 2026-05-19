@@ -30,7 +30,7 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
     public void onEvent(OrderEvent event, long sequence, boolean endOfBatch) {
         if (event.isSnapshot()) {
             processSnapshot(event, sequence);
-        }else {
+        } else {
             processOrder(event);
         }
 
