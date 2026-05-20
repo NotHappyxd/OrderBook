@@ -13,6 +13,7 @@ public class OrderEvent {
     private Side side;
     private int price;
     private int quantity;
+    private long clientRequestId;
 
     @Override
     public String toString() {

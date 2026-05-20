@@ -39,7 +39,7 @@ public class Exchange {
         }
     }
 
-    public void process(long ticker, Side side, int price, int quantity, Channel channel) {
+    public void process(long ticker, Side side, int price, int quantity, long clientRequestId, Channel channel) {
         int shard = Math.toIntExact(Math.abs(ticker % shardCount));
 
         disruptors[shard].getRingBuffer().publishEvent((event, sequence) -> {
@@ -48,6 +48,7 @@ public class Exchange {
             event.setSide(side);
             event.setPrice(price);
             event.setQuantity(quantity);
+            event.setClientRequestId(clientRequestId);
         });
     }
 

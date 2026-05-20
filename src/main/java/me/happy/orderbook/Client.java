@@ -52,6 +52,7 @@ class ExchangeClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
         order.writeByte(0x01);      // Side: BUY
         order.writeInt(150);        // Price
         order.writeInt(100);        // Quantity
+        order.writeLong(1);            // Client-side Order Request Id
 
         ctx.write(order);
 
@@ -73,7 +74,7 @@ class ExchangeClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
         if (operation == 7) {
             in.readByte();
 
-            System.out.println("Order Acknowledgement Received for order " + in.readLong());
+            System.out.println("Order Acknowledgement Received for order (Client ID: " + in.readLong() + ", Server ID: " + in.readLong() + ")");
         } else if (operation == 6) {
             in.readByte();
 

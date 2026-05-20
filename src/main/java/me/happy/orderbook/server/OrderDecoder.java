@@ -32,8 +32,9 @@ public class OrderDecoder extends ReplayingDecoder<State> {
                     byte orderType = byteBuf.readByte();
                     int price = byteBuf.readInt();
                     int quantity = byteBuf.readInt();
+                    long clientRequestId = byteBuf.readLong();
 
-                    exchange.process(tickerId, orderType == 0x01 ? Side.BUY : Side.SELL, price, quantity, channelHandlerContext.channel());
+                    exchange.process(tickerId, orderType == 0x01 ? Side.BUY : Side.SELL, price, quantity, clientRequestId, channelHandlerContext.channel());
                 } else if (operation == 0x02) {
                     long tickerId = byteBuf.readLong();
 

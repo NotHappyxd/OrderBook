@@ -37,8 +37,6 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
         if (endOfBatch) {
             event.getChannel().flush();
         }
-
-        System.out.println(sequence);
     }
 
     @Override
@@ -55,7 +53,7 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
             orderBook.fillSnapshot(snapshot, 5);
         }
 
-        event.getChannel().writeAndFlush(snapshot);
+        event.getChannel().write(snapshot);
     }
 
     private void processOrder(OrderEvent event) {
@@ -76,6 +74,7 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
         // Acknowledge
         ByteBuf byteBuf = event.getChannel().alloc().buffer(33);
         byteBuf.writeByte(0x07);
+        byteBuf.writeLong(event.getClientRequestId());
         byteBuf.writeLong(order.getId());
         event.getChannel().write(byteBuf);
 
