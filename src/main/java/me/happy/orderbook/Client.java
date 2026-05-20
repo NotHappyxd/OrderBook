@@ -6,6 +6,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
 import java.util.concurrent.TimeUnit;
 
@@ -13,6 +14,8 @@ public class Client {
 
     static void main(String[] args) throws Exception {
         EventLoopGroup group = new NioEventLoopGroup();
+
+        short fieldLength = 2;
 
         try {
             Bootstrap b = new Bootstrap();
@@ -22,6 +25,7 @@ public class Client {
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         public void initChannel(SocketChannel ch) {
+                            ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(65535, 0, fieldLength, 0, fieldLength));
                             ch.pipeline().addLast(new ExchangeClientHandler());
                         }
                     });
@@ -48,14 +52,14 @@ class ExchangeClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
         order.writeInt(150);        // Price
         order.writeInt(100);        // Quantity
 
-        ctx.writeAndFlush(order);
+        ctx.write(order);
 
-        ctx.executor().schedule(() -> {
-            ByteBuf snapshotReq = ctx.alloc().buffer();
-            snapshotReq.writeByte(0x02); // Operation: Snapshot Request
-            snapshotReq.writeLong(12345L);
-            ctx.writeAndFlush(snapshotReq);
-        }, 1, TimeUnit.SECONDS);
+        ByteBuf snapshotReq = ctx.alloc().buffer();
+        snapshotReq.writeByte(0x02); // Operation: Snapshot Request
+        snapshotReq.writeLong(12345L);
+        ctx.write(snapshotReq);
+
+        ctx.flush();
 
     }
 
@@ -69,7 +73,6 @@ class ExchangeClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
             in.readByte();
 
             System.out.println("Order Acknowledgement Received for order " + in.readLong());
-
         } else if (operation == 6) {
             in.readByte();
 

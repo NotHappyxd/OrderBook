@@ -22,6 +22,7 @@ public class OrderDecoder extends ReplayingDecoder<State> {
         switch (state()) {
             case READ_OPERATION -> {
                 operation = byteBuf.readByte();
+                System.out.println("Operation: " + operation);
                 checkpoint(State.READ_PAYLOAD);
             }
 
@@ -34,7 +35,6 @@ public class OrderDecoder extends ReplayingDecoder<State> {
 
                     exchange.process(tickerId, orderType == 0x01 ? Side.BUY : Side.SELL, price, quantity, channelHandlerContext.channel());
                 } else if (operation == 0x02) {
-                    // TODO: Implement snapshot logic
                     long tickerId = byteBuf.readLong();
 
                     exchange.processSnapshot(tickerId, channelHandlerContext.channel());
