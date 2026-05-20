@@ -16,6 +16,7 @@ public class Client {
         EventLoopGroup group = new NioEventLoopGroup();
 
         short fieldLength = 2;
+        short maxMessageLength = 512; // Messages should never exceed 512 bytes (in theory)
 
         try {
             Bootstrap b = new Bootstrap();
@@ -25,7 +26,7 @@ public class Client {
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         public void initChannel(SocketChannel ch) {
-                            ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(65535, 0, fieldLength, 0, fieldLength));
+                            ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(maxMessageLength, 0, fieldLength, 0, fieldLength));
                             ch.pipeline().addLast(new ExchangeClientHandler());
                         }
                     });
