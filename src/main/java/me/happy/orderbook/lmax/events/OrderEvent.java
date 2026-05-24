@@ -1,4 +1,4 @@
-package me.happy.orderbook.lmax;
+package me.happy.orderbook.lmax.events;
 
 import io.netty.channel.Channel;
 import lombok.Data;

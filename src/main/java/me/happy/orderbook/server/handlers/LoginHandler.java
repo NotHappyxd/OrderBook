@@ -1,4 +1,4 @@
-package me.happy.orderbook.server;
+package me.happy.orderbook.server.handlers;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;

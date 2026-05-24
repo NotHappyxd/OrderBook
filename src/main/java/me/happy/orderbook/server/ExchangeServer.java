@@ -8,6 +8,9 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import me.happy.orderbook.lmax.Exchange;
+import me.happy.orderbook.server.handlers.LoginHandler;
+import me.happy.orderbook.server.handlers.OrderDecoder;
+import me.happy.orderbook.server.handlers.OrderSnapshotEncoder;
 
 import java.util.concurrent.TimeUnit;
 
@@ -20,7 +23,7 @@ public class ExchangeServer {
     }
 
     public void startServer(Exchange exchange) throws Exception {
-        EventLoopGroup bossGroup = new MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory());;
+        EventLoopGroup bossGroup = new MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory());
         EventLoopGroup workerGroup = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
 
         short fieldLength = 2;

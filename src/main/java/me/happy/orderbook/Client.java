@@ -8,8 +8,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
-import java.util.concurrent.TimeUnit;
-
 public class Client {
 
     static void main(String[] args) throws Exception {

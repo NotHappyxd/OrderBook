@@ -1,4 +1,4 @@
-package me.happy.orderbook.lmax;
+package me.happy.orderbook.lmax.handler;
 
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.Sequence;
@@ -6,10 +6,13 @@ import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import me.happy.orderbook.engine.OrderBook;
 import me.happy.orderbook.engine.OrderSnapshot;
+import me.happy.orderbook.lmax.OrderAllocator;
+import me.happy.orderbook.lmax.events.OrderEvent;
 import me.happy.orderbook.order.Order;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Getter
 public class OrderEventHandler implements EventHandler<OrderEvent> {
@@ -28,6 +31,7 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
 
     @Override
     public void onEvent(OrderEvent event, long sequence, boolean endOfBatch) {
+        long start = System.nanoTime();
         if (event.isSnapshot()) {
             processSnapshot(event, sequence);
         } else {
@@ -37,6 +41,9 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
         if (endOfBatch) {
             event.getChannel().flush();
         }
+        long elapsed = System.nanoTime() - start;
+
+        System.out.println("Order event took " + elapsed + " ns to complete. (" + TimeUnit.NANOSECONDS.toMillis(elapsed) + " ms)");
     }
 
     @Override

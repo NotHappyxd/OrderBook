@@ -1,4 +1,4 @@
-package me.happy.orderbook.lmax.trade;
+package me.happy.orderbook.lmax.events;
 
 import lombok.Data;
 import me.happy.orderbook.order.Side;

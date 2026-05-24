@@ -1,4 +1,4 @@
-package me.happy.orderbook.lmax.trade;
+package me.happy.orderbook.lmax.handler;
 
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.Sequence;
@@ -8,6 +8,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import me.happy.orderbook.lmax.events.TradeEvent;
 import me.happy.orderbook.order.Side;
 
 public class TradeEventHandler implements EventHandler<TradeEvent> {

@@ -1,4 +1,4 @@
-package me.happy.orderbook.server;
+package me.happy.orderbook.server.handlers;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -8,13 +8,13 @@ import me.happy.orderbook.order.Side;
 
 import java.util.List;
 
-public class OrderDecoder extends ReplayingDecoder<State> {
+public class OrderDecoder extends ReplayingDecoder<DecoderState> {
     private final Exchange exchange;
     private byte operation;
 
     public OrderDecoder(Exchange exchange) {
         this.exchange = exchange;
-        super(State.READ_OPERATION); // Start by looking for the type
+        super(DecoderState.READ_OPERATION); // Start by looking for the type
     }
 
     @Override
@@ -23,7 +23,7 @@ public class OrderDecoder extends ReplayingDecoder<State> {
             case READ_OPERATION -> {
                 operation = byteBuf.readByte();
                 System.out.println("Operation: " + operation);
-                checkpoint(State.READ_PAYLOAD);
+                checkpoint(DecoderState.READ_PAYLOAD);
             }
 
             case READ_PAYLOAD -> {
@@ -41,14 +41,9 @@ public class OrderDecoder extends ReplayingDecoder<State> {
                     exchange.processSnapshot(tickerId, channelHandlerContext.channel());
                 }
 
-                checkpoint(State.READ_OPERATION);
+                checkpoint(DecoderState.READ_OPERATION);
                 break;
             }
         }
     }
-}
-
-enum State {
-    READ_OPERATION,
-    READ_PAYLOAD
 }

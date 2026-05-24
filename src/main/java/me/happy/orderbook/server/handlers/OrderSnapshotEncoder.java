@@ -1,4 +1,4 @@
-package me.happy.orderbook.server;
+package me.happy.orderbook.server.handlers;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
