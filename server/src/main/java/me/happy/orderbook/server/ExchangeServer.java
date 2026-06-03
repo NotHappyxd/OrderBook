@@ -5,11 +5,14 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import me.happy.orderbook.Constants;
 import me.happy.orderbook.lmax.Exchange;
+import me.happy.orderbook.server.handlers.CompleteOrderDecoder;
 import me.happy.orderbook.server.handlers.LoginHandler;
-import me.happy.orderbook.server.handlers.OrderDecoder;
+import me.happy.orderbook.server.handlers.ReplayingOrderDecoder;
 import me.happy.orderbook.server.handlers.OrderSnapshotEncoder;
 
 import java.util.concurrent.TimeUnit;
@@ -26,8 +29,6 @@ public class ExchangeServer {
         EventLoopGroup bossGroup = new MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory());
         EventLoopGroup workerGroup = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
 
-        short fieldLength = 2;
-
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
 
@@ -36,10 +37,11 @@ public class ExchangeServer {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
-                            socketChannel.pipeline().addLast(new LengthFieldPrepender(fieldLength));
+                            socketChannel.pipeline().addLast(new LengthFieldPrepender(Constants.FIELD_LENGTH));
                             socketChannel.pipeline().addLast(new LoginHandler(exchange));
                             socketChannel.pipeline().addLast(new ReadTimeoutHandler(5, TimeUnit.MINUTES));
-                            socketChannel.pipeline().addLast(new OrderDecoder(exchange));
+                            socketChannel.pipeline().addLast(new LengthFieldBasedFrameDecoder(Constants.MAX_MESSAGE_LENGTH, 0, Constants.FIELD_LENGTH, 0, Constants.FIELD_LENGTH));
+                            socketChannel.pipeline().addLast(new CompleteOrderDecoder(exchange));
                             socketChannel.pipeline().addLast(new OrderSnapshotEncoder());
                         }
                     }).option(ChannelOption.SO_BACKLOG, 128)

@@ -8,11 +8,12 @@ import me.happy.orderbook.order.Side;
 
 import java.util.List;
 
-public class OrderDecoder extends ReplayingDecoder<DecoderState> {
+@Deprecated
+public class ReplayingOrderDecoder extends ReplayingDecoder<DecoderState> {
     private final Exchange exchange;
     private byte operation;
 
-    public OrderDecoder(Exchange exchange) {
+    public ReplayingOrderDecoder(Exchange exchange) {
         this.exchange = exchange;
         super(DecoderState.READ_OPERATION); // Start by looking for the type
     }
@@ -22,7 +23,7 @@ public class OrderDecoder extends ReplayingDecoder<DecoderState> {
         switch (state()) {
             case READ_OPERATION -> {
                 operation = byteBuf.readByte();
-                System.out.println("Operation: " + operation);
+                System.out.println(operation);
                 checkpoint(DecoderState.READ_PAYLOAD);
             }
 
@@ -34,6 +35,7 @@ public class OrderDecoder extends ReplayingDecoder<DecoderState> {
                     int quantity = byteBuf.readInt();
                     long clientRequestId = byteBuf.readLong();
 
+                    System.out.println(clientRequestId);
                     exchange.process(tickerId, orderType == 0x01 ? Side.BUY : Side.SELL, price, quantity, clientRequestId, channelHandlerContext.channel());
                 } else if (operation == 0x02) {
                     long tickerId = byteBuf.readLong();

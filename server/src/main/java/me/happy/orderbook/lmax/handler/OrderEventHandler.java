@@ -81,6 +81,7 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
         // Acknowledge
         ByteBuf byteBuf = event.getChannel().alloc().buffer(33);
         byteBuf.writeByte(0x07);
+        System.out.println(event.getClientRequestId());
         byteBuf.writeLong(event.getClientRequestId());
         byteBuf.writeLong(order.getId());
         event.getChannel().write(byteBuf);
