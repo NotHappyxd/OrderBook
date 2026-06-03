@@ -4,6 +4,7 @@ import lombok.Getter;
 import me.happy.orderbook.lmax.Exchange;
 import me.happy.orderbook.lmax.OrderAllocator;
 import me.happy.orderbook.order.Order;
+import me.happy.orderbook.order.OrderSnapshot;
 import me.happy.orderbook.order.Side;
 
 import java.util.Comparator;
@@ -67,7 +68,7 @@ public class OrderBook {
                     orderAllocator.release(sellOrder);
                 }
 
-                Exchange.getInstance().publishFill(ticker, order.getId(), sellOrder.getId(), order.getPrice(), traded, sellOrder.getSide());
+                Exchange.getInstance().publishFill(ticker, order.getId(), sellOrder.getId(), bestPrice, traded, sellOrder.getSide());
             }
 
             if (sellOrders.isEmpty()) {
@@ -99,7 +100,7 @@ public class OrderBook {
                     orderAllocator.release(buyOrder);
                 }
 
-                Exchange.getInstance().publishFill(ticker, order.getId(), buyOrder.getId(), order.getPrice(), traded, buyOrder.getSide());
+                Exchange.getInstance().publishFill(ticker, order.getId(), buyOrder.getId(), bestBuyPrice, traded, buyOrder.getSide());
             }
 
             if (buyOrders.isEmpty()) {

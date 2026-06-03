@@ -3,7 +3,7 @@ package me.happy.orderbook.server.handlers;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import me.happy.orderbook.engine.OrderSnapshot;
+import me.happy.orderbook.order.OrderSnapshot;
 
 public class OrderSnapshotEncoder extends MessageToByteEncoder<OrderSnapshot> {
     @Override

@@ -13,7 +13,7 @@ public class OrderBookTest extends TestCase {
     }
 
     public void testOrderBook() {
-        OrderBook orderbook = new OrderBook(new OrderAllocator(50));
+        OrderBook orderbook = new OrderBook(new OrderAllocator(50), 123);
 
         // Test if added properly
         orderbook.process(new Order(1, Side.BUY, 100, 100));
@@ -24,11 +24,11 @@ public class OrderBookTest extends TestCase {
         // Test Matching
         orderbook.process(new Order(1, Side.SELL, 100, 50));
         assertEquals(1, orderbook.getBids().size());
-        assertEquals(50, orderbook.getBids().firstEntry().getValue().getFirst().getQuantity());
+        assertEquals(50, orderbook.getBids().firstEntry().getValue().getOrders().getFirst().getQuantity());
 
         orderbook.process(new Order(1, Side.BUY, 101, 50));
         assertEquals(1, orderbook.getAsks().size());
-        assertEquals(50, orderbook.getAsks().firstEntry().getValue().getFirst().getQuantity());
+        assertEquals(50, orderbook.getAsks().firstEntry().getValue().getOrders().getFirst().getQuantity());
 
         // Test Multiple Price Levels
         orderbook.process(new Order(1, Side.BUY, 105, 100));

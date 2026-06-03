@@ -50,7 +50,7 @@ class ExchangeClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
         order.writeByte(0x01);      // Side: BUY
         order.writeInt(150);        // Price
         order.writeInt(100);        // Quantity
-        order.writeLong(1);            // Client-side Order Request Id
+        order.writeLong(1);         // Client-side Order Request Id
 
         ctx.write(order);
 

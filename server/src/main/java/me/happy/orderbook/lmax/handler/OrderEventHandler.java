@@ -5,7 +5,7 @@ import com.lmax.disruptor.Sequence;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import me.happy.orderbook.engine.OrderBook;
-import me.happy.orderbook.engine.OrderSnapshot;
+import me.happy.orderbook.order.OrderSnapshot;
 import me.happy.orderbook.lmax.OrderAllocator;
 import me.happy.orderbook.lmax.events.OrderEvent;
 import me.happy.orderbook.order.Order;
