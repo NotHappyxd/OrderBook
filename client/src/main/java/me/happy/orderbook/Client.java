@@ -20,7 +20,10 @@ public class Client {
         INSTANCE = this;
 
         this.packetManager = new PacketManager();
-        this.packetManager.registerPackets(MarketOrderPacket.class, SnapshotRequestPacket.class, SnapshotResponsePacket.class, OrderAcknowledgementPacket.class, OrderFilledPacket.class);
+        this.packetManager.registerPackets(MarketOrderPacket.class, SnapshotRequestPacket.class,
+                SnapshotResponsePacket.class, OrderAcknowledgementPacket.class, OrderFilledPacket.class,
+                ServerKickPacket.class
+        );
         this.packetManager.registerListeners(new AcknowledgementListener());
 
         this.serverConnection = new ServerConnection(this);

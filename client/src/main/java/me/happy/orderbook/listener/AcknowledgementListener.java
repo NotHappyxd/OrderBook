@@ -2,6 +2,7 @@ package me.happy.orderbook.listener;
 
 import me.happy.orderbook.packet.impl.OrderAcknowledgementPacket;
 import me.happy.orderbook.packet.impl.OrderFilledPacket;
+import me.happy.orderbook.packet.impl.ServerKickPacket;
 import me.happy.orderbook.packet.impl.SnapshotResponsePacket;
 import me.happy.orderbook.packet.listener.PacketHandler;
 
@@ -23,5 +24,10 @@ public class AcknowledgementListener {
     @PacketHandler
     public void orderFilled(OrderFilledPacket packet) {
         System.out.println(packet.getSide().name() + " Order for ticker " + packet.getTickerId() + " filled! $" + packet.getPrice() + " @ " + packet.getQuantity());
+    }
+
+    @PacketHandler
+    public void onKick(ServerKickPacket packet) {
+        System.out.println(packet.getKickReason());
     }
 }

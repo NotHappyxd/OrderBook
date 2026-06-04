@@ -19,7 +19,6 @@ public class ExchangeClientHandler extends SimpleChannelInboundHandler<ByteBuf> 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         System.out.println("Channel Active! Connected to server.");
-
     }
 
     @Override
@@ -39,5 +38,11 @@ public class ExchangeClientHandler extends SimpleChannelInboundHandler<ByteBuf> 
         packet.get().read(in);
         
         packetManager.publishPacket(packet.get());
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("Disconnected from server.");
+        System.exit(12);
     }
 }
