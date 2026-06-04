@@ -2,7 +2,7 @@ package me.happy.orderbook;
 
 import junit.framework.TestCase;
 import me.happy.orderbook.engine.OrderBook;
-import me.happy.orderbook.lmax.OrderAllocator;
+import me.happy.orderbook.lmax.AllocatorPool;
 import me.happy.orderbook.order.Order;
 import me.happy.orderbook.order.Side;
 
@@ -13,7 +13,7 @@ public class OrderBookTest extends TestCase {
     }
 
     public void testOrderBook() {
-        OrderBook orderbook = new OrderBook(new OrderAllocator(50), 123);
+        OrderBook orderbook = new OrderBook(new AllocatorPool<>(50, Order::new), 123);
 
         // Test if added properly
         orderbook.process(new Order(1, Side.BUY, 100, 100));

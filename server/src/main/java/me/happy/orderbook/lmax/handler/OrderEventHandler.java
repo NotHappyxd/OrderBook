@@ -5,8 +5,8 @@ import com.lmax.disruptor.Sequence;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import me.happy.orderbook.engine.OrderBook;
+import me.happy.orderbook.lmax.AllocatorPool;
 import me.happy.orderbook.order.OrderSnapshot;
-import me.happy.orderbook.lmax.OrderAllocator;
 import me.happy.orderbook.lmax.events.OrderEvent;
 import me.happy.orderbook.order.Order;
 
@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 @Getter
 public class OrderEventHandler implements EventHandler<OrderEvent> {
 
-    private final OrderAllocator orderAllocator;
+    private final AllocatorPool<Order> orderAllocator;
     private final int shardId;
     private final int shardCount;
     private long sequence = 0;
@@ -26,7 +26,7 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
     public OrderEventHandler(int shardId, int shardCount) {
         this.shardId = shardId;
         this.shardCount = shardCount;
-        this.orderAllocator = new OrderAllocator(1024);
+        this.orderAllocator = new AllocatorPool<>(1024, Order::new);
     }
 
     @Override

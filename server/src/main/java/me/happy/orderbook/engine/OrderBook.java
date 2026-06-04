@@ -1,8 +1,8 @@
 package me.happy.orderbook.engine;
 
 import lombok.Getter;
+import me.happy.orderbook.lmax.AllocatorPool;
 import me.happy.orderbook.lmax.Exchange;
-import me.happy.orderbook.lmax.OrderAllocator;
 import me.happy.orderbook.order.Order;
 import me.happy.orderbook.order.OrderSnapshot;
 import me.happy.orderbook.order.Side;
@@ -16,11 +16,13 @@ public class OrderBook {
 
     private final TreeMap<Integer, PriceLevel> bids = new TreeMap<>(Comparator.reverseOrder());
     private final TreeMap<Integer, PriceLevel> asks = new TreeMap<>();
-    private final OrderAllocator orderAllocator;
+    private final AllocatorPool<Order> orderAllocator;
+    private final AllocatorPool<PriceLevel> priceLevelAllocator;
     private final long ticker;
 
-    public OrderBook(OrderAllocator orderAllocator, long ticker) {
+    public OrderBook(AllocatorPool<Order> orderAllocator, long ticker) {
         this.orderAllocator = orderAllocator;
+        this.priceLevelAllocator = new AllocatorPool<>(1024, PriceLevel::new);
         this.ticker = ticker;
     }
 
@@ -37,10 +39,22 @@ public class OrderBook {
 
     public void addToBook(Order order) {
         if (order.getSide() == Side.BUY) {
-            bids.computeIfAbsent(order.getPrice(), _ -> new PriceLevel())
+            bids.computeIfAbsent(order.getPrice(), _ -> {
+                        PriceLevel priceLevel = priceLevelAllocator.borrow();
+                        priceLevel.getOrders().clear();
+                        priceLevel.setTotalQuantity(0);
+
+                        return priceLevel;
+                    })
                     .addOrder(order);
         } else {
-            asks.computeIfAbsent(order.getPrice(), _ -> new PriceLevel())
+            asks.computeIfAbsent(order.getPrice(), _ -> {
+                        PriceLevel priceLevel = priceLevelAllocator.borrow();
+                        priceLevel.getOrders().clear();
+                        priceLevel.setTotalQuantity(0);
+
+                        return priceLevel;
+                    })
                     .addOrder(order);
         }
     }
@@ -72,6 +86,7 @@ public class OrderBook {
             }
 
             if (sellOrders.isEmpty()) {
+                priceLevelAllocator.release(priceLevel);
                 asks.remove(bestPrice);
             }
         }
@@ -104,6 +119,7 @@ public class OrderBook {
             }
 
             if (buyOrders.isEmpty()) {
+                priceLevelAllocator.release(priceLevel);
                 bids.remove(bestBuyPrice);
             }
         }

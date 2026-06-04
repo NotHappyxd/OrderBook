@@ -7,6 +7,7 @@ import me.happy.orderbook.packet.PacketManager;
 import me.happy.orderbook.packet.impl.*;
 
 import java.nio.channels.Channel;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Getter
 public class Client {
