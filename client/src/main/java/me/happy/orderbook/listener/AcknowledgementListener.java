@@ -1,16 +1,19 @@
 package me.happy.orderbook.listener;
 
-import me.happy.orderbook.packet.impl.OrderAcknowledgementPacket;
-import me.happy.orderbook.packet.impl.OrderFilledPacket;
-import me.happy.orderbook.packet.impl.ServerKickPacket;
-import me.happy.orderbook.packet.impl.SnapshotResponsePacket;
+import me.happy.orderbook.Client;
+import me.happy.orderbook.TickerUtils;
+import me.happy.orderbook.packet.impl.*;
 import me.happy.orderbook.packet.listener.PacketHandler;
 
 public class AcknowledgementListener {
 
     @PacketHandler
     public void acknowledgementReceived(OrderAcknowledgementPacket packet) {
-        System.out.printf("Client ID: %d, Server ID: %d\n", packet.getClientOrderId(), packet.getServerOrderId());
+        System.out.printf("Client ID: %d, Server ID: %d, Secret: %d\n", packet.getClientOrderId(), packet.getServerOrderId(), packet.getSecret());
+
+        if (packet.getClientOrderId() == 3)
+            Client.getInstance().getServerConnection().writePacket(new OrderCancelPacket(packet.getServerOrderId(),
+                    TickerUtils.packString("asd"), 11, packet.getSecret()));
     }
 
     @PacketHandler

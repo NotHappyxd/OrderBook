@@ -10,9 +10,16 @@ import lombok.NoArgsConstructor;
 public class Order {
 
     private long id;
+    private long secret;
+
     private Side side;
+
     private int price;
     private int quantity;
+
+    private Order next;
+    private Order previous;
+    private PriceLevel priceLevel;
 
     public void reset() {
         this.id = 0;

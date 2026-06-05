@@ -5,17 +5,17 @@ import me.happy.orderbook.lmax.AllocatorPool;
 import me.happy.orderbook.lmax.Exchange;
 import me.happy.orderbook.order.Order;
 import me.happy.orderbook.order.OrderSnapshot;
+import me.happy.orderbook.order.PriceLevel;
 import me.happy.orderbook.order.Side;
 
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.TreeMap;
+import java.util.*;
 
 @Getter
 public class OrderBook {
 
     private final TreeMap<Integer, PriceLevel> bids = new TreeMap<>(Comparator.reverseOrder());
     private final TreeMap<Integer, PriceLevel> asks = new TreeMap<>();
+    private final Map<Long, Order> orderMap = new HashMap<>();
     private final AllocatorPool<Order> orderAllocator;
     private final AllocatorPool<PriceLevel> priceLevelAllocator;
     private final long ticker;
@@ -41,8 +41,7 @@ public class OrderBook {
         if (order.getSide() == Side.BUY) {
             bids.computeIfAbsent(order.getPrice(), _ -> {
                         PriceLevel priceLevel = priceLevelAllocator.borrow();
-                        priceLevel.getOrders().clear();
-                        priceLevel.setTotalQuantity(0);
+                        priceLevel.reset();
 
                         return priceLevel;
                     })
@@ -50,13 +49,14 @@ public class OrderBook {
         } else {
             asks.computeIfAbsent(order.getPrice(), _ -> {
                         PriceLevel priceLevel = priceLevelAllocator.borrow();
-                        priceLevel.getOrders().clear();
-                        priceLevel.setTotalQuantity(0);
+                        priceLevel.reset();
 
                         return priceLevel;
                     })
                     .addOrder(order);
         }
+
+        orderMap.put(order.getId(), order);
     }
 
     public void matchBuy(Order order) {
@@ -66,11 +66,9 @@ public class OrderBook {
             if (bestPrice > order.getPrice()) break;
 
             PriceLevel priceLevel = asks.get(bestPrice);
-            Deque<Order> sellOrders = priceLevel.getOrders();
+            Order sellOrder = priceLevel.getHead();
 
-            while (!sellOrders.isEmpty() && order.getQuantity() > 0) {
-                Order sellOrder = sellOrders.peekFirst();
-
+            while (sellOrder != null && order.getQuantity() > 0) {
                 int traded = Math.min(sellOrder.getQuantity(), order.getQuantity());
 
                 sellOrder.setQuantity(sellOrder.getQuantity() - traded);
@@ -78,14 +76,17 @@ public class OrderBook {
                 priceLevel.setTotalQuantity(priceLevel.getTotalQuantity() - traded);
 
                 if (sellOrder.getQuantity() == 0) {
-                    sellOrders.pollFirst();
+                    priceLevel.removeOrder(order);
+                    orderMap.remove(sellOrder.getId());
                     orderAllocator.release(sellOrder);
                 }
 
                 Exchange.getInstance().publishFill(ticker, order.getId(), sellOrder.getId(), bestPrice, traded, sellOrder.getSide());
+
+                sellOrder = sellOrder.getNext();
             }
 
-            if (sellOrders.isEmpty()) {
+            if (priceLevel.getHead() == null) {
                 priceLevelAllocator.release(priceLevel);
                 asks.remove(bestPrice);
             }
@@ -99,11 +100,9 @@ public class OrderBook {
             if (bestBuyPrice < order.getPrice()) break;
 
             PriceLevel priceLevel = bids.get(bestBuyPrice);
-            Deque<Order> buyOrders = priceLevel.getOrders();
+            Order buyOrder = priceLevel.getHead();
 
-            while (!buyOrders.isEmpty() && order.getQuantity() > 0) {
-                Order buyOrder = buyOrders.peekFirst();
-
+            while (buyOrder != null && order.getQuantity() > 0) {
                 int traded = Math.min(buyOrder.getQuantity(), order.getQuantity());
 
                 buyOrder.setQuantity(buyOrder.getQuantity() - traded);
@@ -111,14 +110,17 @@ public class OrderBook {
                 priceLevel.setTotalQuantity(priceLevel.getTotalQuantity() - traded);
 
                 if (buyOrder.getQuantity() == 0) {
-                    buyOrders.pollFirst();
+                    priceLevel.removeOrder(order);
+                    orderMap.remove(buyOrder.getId());
                     orderAllocator.release(buyOrder);
                 }
 
                 Exchange.getInstance().publishFill(ticker, order.getId(), buyOrder.getId(), bestBuyPrice, traded, buyOrder.getSide());
+
+                buyOrder = buyOrder.getNext();
             }
 
-            if (buyOrders.isEmpty()) {
+            if (priceLevel.getHead() == null) {
                 priceLevelAllocator.release(priceLevel);
                 bids.remove(bestBuyPrice);
             }
@@ -147,6 +149,23 @@ public class OrderBook {
             snapshot.getBidsQuantities()[i] = entry.getValue().getTotalQuantity();
             i++;
         }
+    }
 
+    public boolean cancelOrder(long orderId) {
+        Order order = orderMap.get(orderId);
+
+        System.out.println("Cannot find order " + orderId);
+        System.out.println(orderMap);
+        if (order == null) return false;
+
+        if (order.getSide() == Side.BUY) {
+            bids.get(order.getPrice()).removeOrder(order);
+        }else {
+            asks.get(order.getPrice()).removeOrder(order);
+        }
+
+        orderAllocator.release(order);
+
+        return true;
     }
 }

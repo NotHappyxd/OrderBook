@@ -6,9 +6,6 @@ import me.happy.orderbook.order.Side;
 import me.happy.orderbook.packet.PacketManager;
 import me.happy.orderbook.packet.impl.*;
 
-import java.nio.channels.Channel;
-import java.util.concurrent.ThreadLocalRandom;
-
 @Getter
 public class Client {
 
@@ -34,6 +31,7 @@ public class Client {
         new Client();
 
         getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 1, 1, 3));
+        Thread.sleep(1000L);
         getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.SELL, 1, 1, 4));
         getInstance().serverConnection.writePacket(new SnapshotRequestPacket("asd"));
     }

@@ -2,32 +2,33 @@ package me.happy.orderbook.packet.impl;
 
 import io.netty.buffer.ByteBuf;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
+import me.happy.orderbook.TickerUtils;
+import me.happy.orderbook.order.Side;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
 
-@PacketId(0x07)
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-public class OrderAcknowledgementPacket extends Packet {
+@PacketId(0x05)
+public class OrderCancelPacket extends Packet {
 
-    private long clientOrderId;
-    private long serverOrderId;
+    private long orderId;
+    private long tickerId;
+    private long clientSideId;
     private long secret;
 
     @Override
     public void write(ByteBuf buf) {
-        buf.writeLong(clientOrderId);
-        buf.writeLong(serverOrderId);
+        System.out.println("Writing cancel for " + this.clientSideId);
+        buf.writeLong(orderId);
+        buf.writeLong(tickerId);
+        buf.writeLong(clientSideId);
         buf.writeLong(secret);
     }
 
     @Override
     public void read(ByteBuf buf) {
-        this.clientOrderId = buf.readLong();
-        this.serverOrderId = buf.readLong();
-        this.secret = buf.readLong();
+
     }
 }

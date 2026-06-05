@@ -54,12 +54,24 @@ public class CompleteOrderDecoder extends ByteToMessageDecoder {
                 exchange.processSnapshot(tickerId, context.channel());
                 break;
             }
+
+            case 0x05: {
+                long orderId = safeReadLong(byteBuf);
+                long tickerId = safeReadLong(byteBuf);
+                long clientSideRequestId = safeReadLong(byteBuf);
+                long secret = safeReadLong(byteBuf);
+
+                if (isInvalidLength(byteBuf, context)) throw new ArrayIndexOutOfBoundsException();
+
+                exchange.processCancel(orderId, tickerId, secret, clientSideRequestId, context.channel());
+                break;
+            }
         }
     }
 
     private boolean isInvalidLength(ByteBuf byteBuf, ChannelHandlerContext context) {
         if (byteBuf.readableBytes() > 0) {
-            System.out.println("Received too many bytes. Kicking client!");
+            System.out.println("Received too many bytes (Extra " + (byteBuf.readableBytes()) + " bytes). Kicking client!");
             kickClient(context, 2);
 
             return true;

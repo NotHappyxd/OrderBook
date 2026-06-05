@@ -7,13 +7,18 @@ import me.happy.orderbook.order.Side;
 @Data
 public class OrderEvent {
 
+    private OrderEventCommand command;
+
     private long ticker;
-    private boolean snapshot = false;
+    private long orderId;
+    private long clientRequestId;
+    private long secret;
+
     private Channel channel;
     private Side side;
+
     private int price;
     private int quantity;
-    private long clientRequestId;
 
     @Override
     public String toString() {

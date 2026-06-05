@@ -12,7 +12,6 @@ import me.happy.orderbook.Constants;
 import me.happy.orderbook.lmax.Exchange;
 import me.happy.orderbook.server.handlers.CompleteOrderDecoder;
 import me.happy.orderbook.server.handlers.LoginHandler;
-import me.happy.orderbook.server.handlers.ReplayingOrderDecoder;
 import me.happy.orderbook.server.handlers.OrderSnapshotEncoder;
 
 import java.util.concurrent.TimeUnit;

@@ -5,6 +5,7 @@ import com.lmax.disruptor.util.DaemonThreadFactory;
 import io.netty.channel.Channel;
 import lombok.Getter;
 import me.happy.orderbook.lmax.events.OrderEvent;
+import me.happy.orderbook.lmax.events.OrderEventCommand;
 import me.happy.orderbook.lmax.events.TradeEvent;
 import me.happy.orderbook.lmax.handler.OrderEventHandler;
 import me.happy.orderbook.lmax.handler.TradeEventHandler;
@@ -42,9 +43,8 @@ public class Exchange {
     }
 
     public void process(long ticker, Side side, int price, int quantity, long clientRequestId, Channel channel) {
-        int shard = Math.toIntExact(Math.abs(ticker % shardCount));
-
-        disruptors[shard].getRingBuffer().publishEvent((event, sequence) -> {
+        getDisruptor(ticker).getRingBuffer().publishEvent((event, sequence) -> {
+            event.setCommand(OrderEventCommand.NEW);
             event.setTicker(ticker);
             event.setChannel(channel);
             event.setSide(side);
@@ -55,11 +55,21 @@ public class Exchange {
     }
 
     public void processSnapshot(long ticker, Channel channel) {
-        int shard = Math.toIntExact(Math.abs(ticker % shardCount));
-
-        disruptors[shard].getRingBuffer().publishEvent((event, sequence) -> {
-            event.setSnapshot(true);
+        getDisruptor(ticker).getRingBuffer().publishEvent((event, sequence) -> {
+            event.setCommand(OrderEventCommand.SNAPSHOT);
             event.setTicker(ticker);
+            event.setChannel(channel);
+        });
+    }
+
+    public void processCancel(long orderId, long ticker, long secret, long clientRequestId, Channel channel) {
+        getDisruptor(ticker).getRingBuffer().publishEvent((event, sequence) -> {
+            event.setCommand(OrderEventCommand.CANCEL);
+            event.setOrderId(orderId);
+            event.setClientRequestId(clientRequestId);
+            event.setTicker(ticker);
+            event.setSecret(secret);
+
             event.setChannel(channel);
         });
     }
@@ -74,6 +84,12 @@ public class Exchange {
             event.setQuantity(quantity);
             event.setTakerSide(takerSide);
         });
+    }
+
+    private Disruptor<OrderEvent> getDisruptor(long tickerId) {
+        int shard = Math.toIntExact(Math.abs(tickerId % shardCount));
+
+        return disruptors[shard];
     }
 
     public static Exchange getInstance() {
