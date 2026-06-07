@@ -42,10 +42,29 @@ public class PriceLevel {
         order.setPriceLevel(null);
     }
 
+    // ONLY BE USED FOR TESTING
+    public void recalculateTotalQuantity() {
+        int totalQuantity = 0;
+
+        Order current = this.head;
+
+        while (current != null) {
+            totalQuantity += current.getQuantity();
+
+            current = head.getNext();
+        }
+
+        this.totalQuantity = totalQuantity;
+    }
+
     public void reset() {
         this.head = null;
         this.tail = null;
 
         this.totalQuantity = 0;
+    }
+
+    public void setTotalQuantity(int totalQuantity) {
+        this.totalQuantity = totalQuantity;
     }
 }

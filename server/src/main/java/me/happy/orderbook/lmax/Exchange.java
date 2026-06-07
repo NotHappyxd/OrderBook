@@ -54,6 +54,18 @@ public class Exchange {
         });
     }
 
+    public void processModification(long ticker, long orderId, long secret, long clientSideRequestId, int quantity, int price, Channel channel) {
+        getDisruptor(ticker).getRingBuffer().publishEvent((event, sequence) -> {
+            event.setCommand(OrderEventCommand.MODIFY);
+            event.setTicker(ticker);
+            event.setOrderId(orderId);
+            event.setSecret(secret);
+            event.setClientRequestId(clientSideRequestId);
+            event.setQuantity(quantity);
+            event.setPrice(price);
+            event.setChannel(channel);
+        });
+    }
     public void processSnapshot(long ticker, Channel channel) {
         getDisruptor(ticker).getRingBuffer().publishEvent((event, sequence) -> {
             event.setCommand(OrderEventCommand.SNAPSHOT);

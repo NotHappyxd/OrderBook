@@ -66,6 +66,20 @@ public class CompleteOrderDecoder extends ByteToMessageDecoder {
                 exchange.processCancel(orderId, tickerId, secret, clientSideRequestId, context.channel());
                 break;
             }
+
+            case 0x08: {
+                long ticker = safeReadLong(byteBuf);
+                long orderId = safeReadLong(byteBuf);
+                long secretId = safeReadLong(byteBuf);
+                long clientSideRequestId = safeReadLong(byteBuf);
+                int quantity = safeReadInt(byteBuf);
+                int price = safeReadInt(byteBuf);
+
+                if (isInvalidLength(byteBuf, context)) throw new ArrayIndexOutOfBoundsException();
+
+                exchange.processModification(ticker, orderId, secretId, clientSideRequestId, quantity, price, context.channel());
+                break;
+            }
         }
     }
 

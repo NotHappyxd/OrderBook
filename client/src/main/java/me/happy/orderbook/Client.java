@@ -19,7 +19,7 @@ public class Client {
         this.packetManager = new PacketManager();
         this.packetManager.registerPackets(MarketOrderPacket.class, SnapshotRequestPacket.class,
                 SnapshotResponsePacket.class, OrderAcknowledgementPacket.class, OrderFilledPacket.class,
-                ServerKickPacket.class
+                ServerKickPacket.class, OrderModifyPacket.class, OrderModifyAcknowledgePacket.class
         );
         this.packetManager.registerListeners(new AcknowledgementListener());
 
@@ -31,8 +31,8 @@ public class Client {
         new Client();
 
         getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 1, 1, 3));
+        getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.SELL, 5, 1, 4));
         Thread.sleep(1000L);
-        getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.SELL, 1, 1, 4));
         getInstance().serverConnection.writePacket(new SnapshotRequestPacket("asd"));
     }
 
