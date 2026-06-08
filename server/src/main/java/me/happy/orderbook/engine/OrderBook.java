@@ -81,7 +81,7 @@ public class OrderBook {
                     orderAllocator.release(sellOrder);
                 }
 
-                Exchange.getInstance().publishFill(ticker, order.getId(), sellOrder.getId(), bestPrice, traded, sellOrder.getSide());
+                Exchange.getInstance().getTradePublisher().publishFill(ticker, order.getId(), sellOrder.getId(), bestPrice, traded, sellOrder.getSide());
 
                 sellOrder = sellOrder.getNext();
             }
@@ -115,7 +115,7 @@ public class OrderBook {
                     orderAllocator.release(buyOrder);
                 }
 
-                Exchange.getInstance().publishFill(ticker, order.getId(), buyOrder.getId(), bestBuyPrice, traded, buyOrder.getSide());
+                Exchange.getInstance().getTradePublisher().publishFill(ticker, order.getId(), buyOrder.getId(), bestBuyPrice, traded, buyOrder.getSide());
 
                 buyOrder = buyOrder.getNext();
             }

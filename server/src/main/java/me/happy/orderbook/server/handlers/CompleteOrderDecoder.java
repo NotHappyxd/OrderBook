@@ -41,7 +41,7 @@ public class CompleteOrderDecoder extends ByteToMessageDecoder {
 
                 if (isInvalidLength(byteBuf, context)) return;
 
-                exchange.process(tickerId, orderType == 0x01 ? Side.BUY : Side.SELL, price, quantity, clientRequestId, context.channel());
+                exchange.getPublisher(tickerId).process(tickerId, orderType == 0x01 ? Side.BUY : Side.SELL, price, quantity, clientRequestId, context.channel());
 
                 break;
             }
@@ -51,7 +51,7 @@ public class CompleteOrderDecoder extends ByteToMessageDecoder {
 
                 if (isInvalidLength(byteBuf, context)) return;
 
-                exchange.processSnapshot(tickerId, context.channel());
+                exchange.getPublisher(tickerId).processSnapshot(tickerId, context.channel());
                 break;
             }
 
@@ -63,7 +63,7 @@ public class CompleteOrderDecoder extends ByteToMessageDecoder {
 
                 if (isInvalidLength(byteBuf, context)) throw new ArrayIndexOutOfBoundsException();
 
-                exchange.processCancel(orderId, tickerId, secret, clientSideRequestId, context.channel());
+                exchange.getPublisher(tickerId).processCancel(orderId, tickerId, secret, clientSideRequestId, context.channel());
                 break;
             }
 
@@ -77,7 +77,7 @@ public class CompleteOrderDecoder extends ByteToMessageDecoder {
 
                 if (isInvalidLength(byteBuf, context)) throw new ArrayIndexOutOfBoundsException();
 
-                exchange.processModification(ticker, orderId, secretId, clientSideRequestId, quantity, price, context.channel());
+                exchange.getPublisher(ticker).processModification(ticker, orderId, secretId, clientSideRequestId, quantity, price, context.channel());
                 break;
             }
         }

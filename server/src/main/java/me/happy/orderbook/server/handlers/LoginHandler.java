@@ -12,7 +12,7 @@ public class LoginHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        exchange.getTradeEventHandler().addClient(ctx.channel());
+        exchange.getTradePublisher().getTradeEventHandler().addClient(ctx.channel());
         ctx.fireChannelActive();
     }
 }

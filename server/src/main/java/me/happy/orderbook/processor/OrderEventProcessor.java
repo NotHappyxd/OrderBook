@@ -1,15 +1,13 @@
-package me.happy.orderbook.lmax.handler;
+package me.happy.orderbook.processor;
 
-import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.Sequence;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import lombok.Getter;
 import me.happy.orderbook.engine.OrderBook;
 import me.happy.orderbook.lmax.AllocatorPool;
-import me.happy.orderbook.order.OrderSnapshot;
-import me.happy.orderbook.lmax.events.OrderEvent;
+import me.happy.orderbook.lmax.Exchange;
+import me.happy.orderbook.lmax.order.OrderEvent;
 import me.happy.orderbook.order.Order;
+import me.happy.orderbook.order.OrderSnapshot;
 import me.happy.orderbook.order.PriceLevel;
 import me.happy.orderbook.order.Side;
 
@@ -19,8 +17,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-@Getter
-public class OrderEventHandler implements EventHandler<OrderEvent> {
+public class OrderEventProcessor {
 
     private final AllocatorPool<Order> orderAllocator;
     private final int shardId;
@@ -29,14 +26,13 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
     private final Map<Long, OrderBook> orderBookMap = new HashMap<>();
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public OrderEventHandler(int shardId, int shardCount) {
+    public OrderEventProcessor(int shardId, int shardCount) {
         this.shardId = shardId;
         this.shardCount = shardCount;
         this.orderAllocator = new AllocatorPool<>(1024, Order::new);
     }
 
-    @Override
-    public void onEvent(OrderEvent event, long sequence, boolean endOfBatch) {
+    public void process(OrderEvent event, long sequence, boolean endOfBatch) {
         long start = System.nanoTime();
 
         switch (event.getCommand()) {
@@ -46,18 +42,9 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
             case CANCEL -> cancelOrder(event);
         }
 
-        if (endOfBatch) {
-            event.getChannel().flush();
-        }
-
         long elapsed = System.nanoTime() - start;
 
         System.out.println("Order event took " + elapsed + " ns to complete. (" + TimeUnit.NANOSECONDS.toMillis(elapsed) + " ms)");
-    }
-
-    @Override
-    public void setSequenceCallback(Sequence sequenceCallback) {
-        EventHandler.super.setSequenceCallback(sequenceCallback);
     }
 
     private void processModification(OrderEvent event, long sequence) {
@@ -98,8 +85,6 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
             orderBook.addToBook(order);
         }
 
-        System.out.println(order.getQuantity() + "  " + order.getPrice());
-
         sendBuffer(event.getChannel(), 32, 0x09, byteBuf -> {
             byteBuf.writeLong(event.getTicker());
             byteBuf.writeLong(order.getId());
@@ -119,7 +104,7 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
             orderBook.fillSnapshot(snapshot, 5);
         }
 
-        event.getChannel().write(snapshot);
+        Exchange.getInstance().getOutboundPublisher().publish(event.getChannel(), snapshot);
     }
 
     private void processOrder(OrderEvent event) {
@@ -173,12 +158,12 @@ public class OrderEventHandler implements EventHandler<OrderEvent> {
         }
     }
 
-    private void sendBuffer(Channel channel, int size, int operation, Consumer<ByteBuf> payload) {
-        ByteBuf byteBuf = channel.alloc().buffer(size + 1); // Size excludes operation
+    private void sendBuffer(Channel channel, int payloadSize, int operation, Consumer<ByteBuf> payload) {
+        ByteBuf byteBuf = channel.alloc().buffer(payloadSize + 1); // Size excludes operation
         byteBuf.writeByte(operation);
 
         payload.accept(byteBuf);
 
-        channel.write(byteBuf);
+        Exchange.getInstance().getOutboundPublisher().publish(channel, byteBuf);
     }
 }
