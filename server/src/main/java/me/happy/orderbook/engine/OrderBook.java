@@ -37,7 +37,7 @@ public class OrderBook {
             matchSell(order);
         }
 
-        if (order.getQuantity() > 0) {
+        if (order.getQuantity() > 0 && !order.isKill()) {
             addToBook(order);
         }
     }

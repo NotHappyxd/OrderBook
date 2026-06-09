@@ -32,7 +32,7 @@ public class Client {
 
         int clientRequestId = 2;
 
-        getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 1, 1, ++clientRequestId));
+        getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 1, 1, ++clientRequestId, true));
         getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 2, 1, ++clientRequestId));
         getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 3, 1, ++clientRequestId));
         getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.SELL, 5, 1, ++clientRequestId));

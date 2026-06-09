@@ -12,7 +12,7 @@ public class OrderPublisher {
         this.ringBuffer = ringBuffer;
     }
 
-    public void process(long ticker, Side side, int price, int quantity, long clientRequestId, Channel channel) {
+    public void process(long ticker, Side side, int price, int quantity, long clientRequestId, boolean kill, Channel channel) {
         ringBuffer.publishEvent((event, sequence) -> {
             event.setCommand(OrderEventCommand.NEW);
             event.setTicker(ticker);
@@ -21,6 +21,7 @@ public class OrderPublisher {
             event.setPrice(price);
             event.setQuantity(quantity);
             event.setClientRequestId(clientRequestId);
+            event.setKill(kill);
         });
     }
 

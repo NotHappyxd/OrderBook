@@ -111,6 +111,7 @@ public class OrderEventProcessor {
         order.setQuantity(event.getQuantity());
         order.setPrice(event.getPrice());
         order.setSecret(secret);
+        order.setKill(event.isKill());
 
         OrderBook orderBook = orderBookMap.get(event.getTicker());
 

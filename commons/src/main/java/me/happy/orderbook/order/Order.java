@@ -17,6 +17,8 @@ public class Order {
     private int price;
     private int quantity;
 
+    private boolean kill;
+
     private Order next;
     private Order previous;
     private PriceLevel priceLevel;
@@ -26,6 +28,7 @@ public class Order {
         this.side = null;
         this.price = 0;
         this.quantity = 0;
+        this.kill = false;
     }
 
     @Override

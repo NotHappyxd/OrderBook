@@ -18,6 +18,16 @@ public class MarketOrderPacket extends Packet {
     private int price;
     private int quantity;
     private long clientSideId;
+    private boolean kill;
+
+    public MarketOrderPacket(String tickerId, Side side, int price, int quantity, long clientSideId) {
+        this.tickerId = tickerId;
+        this.side = side;
+        this.price = price;
+        this.quantity = quantity;
+        this.clientSideId = clientSideId;
+        this.kill = false;
+    }
 
     @Override
     public void write(ByteBuf buf) {
@@ -26,6 +36,7 @@ public class MarketOrderPacket extends Packet {
         buf.writeInt(price);
         buf.writeInt(quantity);
         buf.writeLong(clientSideId);
+        buf.writeBoolean(kill);
     }
 
     @Override

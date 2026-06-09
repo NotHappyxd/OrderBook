@@ -38,10 +38,11 @@ public class CompleteOrderDecoder extends ByteToMessageDecoder {
                 int price = safeReadInt(byteBuf);
                 int quantity = safeReadInt(byteBuf);
                 long clientRequestId = safeReadLong(byteBuf);
+                boolean kill = safeReadBoolean(byteBuf);
 
                 if (isInvalidLength(byteBuf, context)) return;
 
-                exchange.getPublisher(tickerId).process(tickerId, orderType == 0x01 ? Side.BUY : Side.SELL, price, quantity, clientRequestId, context.channel());
+                exchange.getPublisher(tickerId).process(tickerId, orderType == 0x01 ? Side.BUY : Side.SELL, price, quantity, clientRequestId, kill, context.channel());
 
                 break;
             }
@@ -125,5 +126,13 @@ public class CompleteOrderDecoder extends ByteToMessageDecoder {
         }
 
         return byteBuf.readLong();
+    }
+
+    private boolean safeReadBoolean(ByteBuf byteBuf) throws ArrayIndexOutOfBoundsException {
+        if (byteBuf.readableBytes() < 1) {
+            throw new ArrayIndexOutOfBoundsException("Not enough bytes in buffer for long");
+        }
+
+        return byteBuf.readBoolean();
     }
 }

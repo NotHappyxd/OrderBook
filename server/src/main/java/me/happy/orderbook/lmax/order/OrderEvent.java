@@ -20,6 +20,23 @@ public class OrderEvent {
     private int price;
     private int quantity;
 
+    private boolean kill;
+
+    public void copyFrom(OrderEvent other) {
+        this.command = other.command;
+
+        this.ticker = other.ticker;
+        this.orderId = other.orderId;
+        this.clientRequestId = other.clientRequestId;
+        this.secret = other.secret;
+
+        this.channel = other.channel;
+        this.side = other.side;
+
+        this.price = other.price;
+        this.quantity = other.quantity;
+    }
+
     @Override
     public String toString() {
         return "OrderEvent{" +
