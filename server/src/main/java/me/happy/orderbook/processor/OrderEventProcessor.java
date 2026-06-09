@@ -9,7 +9,6 @@ import me.happy.orderbook.lmax.order.OrderEvent;
 import me.happy.orderbook.order.Order;
 import me.happy.orderbook.order.OrderSnapshot;
 import me.happy.orderbook.order.PriceLevel;
-import me.happy.orderbook.order.Side;
 
 import java.security.SecureRandom;
 import java.util.HashMap;
@@ -57,13 +56,7 @@ public class OrderEventProcessor {
         if (order == null || order.getSecret() != event.getSecret()) return;
         if (event.getQuantity() <= 0 || event.getPrice() <= 0) return; // Stop negative numbers
 
-        PriceLevel priceLevel;
-
-        if (order.getSide() == Side.BUY) {
-            priceLevel = orderBook.getBids().get(order.getPrice());
-        }else {
-            priceLevel = orderBook.getAsks().get(order.getPrice());
-        }
+        PriceLevel priceLevel = orderBook.getBook(order).get(order.getPrice());
 
         boolean quantityChanged = event.getQuantity() != order.getQuantity();
         boolean priceChanged = event.getPrice() != order.getPrice();
@@ -122,7 +115,7 @@ public class OrderEventProcessor {
         OrderBook orderBook = orderBookMap.get(event.getTicker());
 
         if (orderBook == null) {
-            orderBook = new OrderBook(this.orderAllocator, event.getTicker());
+            orderBook = new OrderBook(Exchange.getInstance().getTradePublisher(), this.orderAllocator, event.getTicker());
             this.orderBookMap.put(event.getTicker(), orderBook);
         }
 

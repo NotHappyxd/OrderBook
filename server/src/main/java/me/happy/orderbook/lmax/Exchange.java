@@ -18,12 +18,12 @@ import me.happy.orderbook.order.Side;
 @Getter
 public class Exchange {
 
+    private static Exchange INSTANCE;
     private final int shardCount;
     private final OrderPublisher[] publishers;
     private final OrderEventHandler[] handlers;
     private final TradePublisher tradePublisher;
     private final OutboundPublisher outboundPublisher;
-    private static Exchange INSTANCE;
 
     public Exchange(int shardCount) {
         INSTANCE = this;

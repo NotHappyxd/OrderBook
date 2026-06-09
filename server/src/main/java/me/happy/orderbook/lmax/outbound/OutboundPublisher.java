@@ -27,10 +27,12 @@ public class OutboundPublisher {
     public void publish(Channel channel, OrderSnapshot orderSnapshot) {
         long sequence = ringBuffer.next();
 
-        OutboundEvent event = ringBuffer.get(sequence);
-        event.setChannel(channel);
-        event.setOrderSnapshot(orderSnapshot);
-
-        ringBuffer.publish(sequence);
+        try {
+            OutboundEvent event = ringBuffer.get(sequence);
+            event.setChannel(channel);
+            event.setOrderSnapshot(orderSnapshot);
+        }finally {
+            ringBuffer.publish(sequence);
+        }
     }
 }

@@ -1,10 +1,7 @@
 package me.happy.orderbook.lmax.trade;
 
 import com.lmax.disruptor.RingBuffer;
-import io.netty.channel.Channel;
 import lombok.Getter;
-import me.happy.orderbook.lmax.order.OrderEvent;
-import me.happy.orderbook.lmax.order.OrderEventCommand;
 import me.happy.orderbook.order.Side;
 
 public class TradePublisher {
@@ -19,7 +16,10 @@ public class TradePublisher {
     }
 
     public void publishFill(long tickerId, long orderId, long takerId, int price, int quantity, Side takerSide) {
-        ringBuffer.publishEvent((event, sequence) -> {
+        long sequence = ringBuffer.next();
+
+        try {
+            TradeEvent event = ringBuffer.get(sequence);
             event.setTickerId(tickerId);
             event.setSequence(sequence);
             event.setOrderId(orderId);
@@ -27,6 +27,8 @@ public class TradePublisher {
             event.setPrice(price);
             event.setQuantity(quantity);
             event.setTakerSide(takerSide);
-        });
+        }finally {
+            ringBuffer.publish(sequence);
+        }
     }
 }

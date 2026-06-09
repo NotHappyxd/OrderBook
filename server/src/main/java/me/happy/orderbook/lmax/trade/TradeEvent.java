@@ -14,4 +14,13 @@ public class TradeEvent {
     private int quantity;
     private Side takerSide;
 
+    public void copyFrom(TradeEvent tradeEvent) {
+        this.tickerId = tradeEvent.getTickerId();
+        this.sequence = tradeEvent.getSequence();
+        this.orderId = tradeEvent.getOrderId();
+        this.takerId = tradeEvent.getTakerId();
+        this.price = tradeEvent.getPrice();
+        this.quantity = tradeEvent.getQuantity();
+        this.takerSide = tradeEvent.getTakerSide();
+    }
 }
