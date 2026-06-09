@@ -1,7 +1,6 @@
 package me.happy.orderbook.lmax.journal;
 
 import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.RingBuffer;
 import me.happy.orderbook.lmax.order.OrderEvent;
 
 public class JournalHandler implements EventHandler<OrderEvent> {
@@ -13,11 +12,11 @@ public class JournalHandler implements EventHandler<OrderEvent> {
     }
 
     @Override
-    public void onEvent(OrderEvent event, long l, boolean b) throws Exception {
+    public void onEvent(OrderEvent event, long l, boolean endOfBatch) throws Exception {
         journal.append(event);
 
-        if (b) {
-            journal.flush();
+        if (endOfBatch) {
+            journal.force();
         }
     }
 }

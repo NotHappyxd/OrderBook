@@ -19,15 +19,9 @@ import java.util.function.Consumer;
 public class OrderEventProcessor {
 
     private final AllocatorPool<Order> orderAllocator;
-    private final int shardId;
-    private final int shardCount;
-    private long sequence = 0;
     private final Map<Long, OrderBook> orderBookMap = new HashMap<>();
-    private final SecureRandom secureRandom = new SecureRandom();
 
-    public OrderEventProcessor(int shardId, int shardCount) {
-        this.shardId = shardId;
-        this.shardCount = shardCount;
+    public OrderEventProcessor() {
         this.orderAllocator = new AllocatorPool<>(1024, Order::new);
     }
 
@@ -104,13 +98,11 @@ public class OrderEventProcessor {
         Order order = orderAllocator.borrow();
         order.reset();
 
-        long secret = secureRandom.nextLong();
-
         order.setSide(event.getSide());
-        order.setId((++this.sequence * shardCount) + shardId);
+        order.setId(event.getOrderId());
         order.setQuantity(event.getQuantity());
         order.setPrice(event.getPrice());
-        order.setSecret(secret);
+        order.setSecret(event.getSecret());
         order.setKill(event.isKill());
 
         OrderBook orderBook = orderBookMap.get(event.getTicker());
@@ -124,7 +116,7 @@ public class OrderEventProcessor {
         sendBuffer(event.getChannel(), 32, 0x07, byteBuf -> {
             byteBuf.writeLong(event.getClientRequestId());
             byteBuf.writeLong(order.getId());
-            byteBuf.writeLong(secret);
+            byteBuf.writeLong(event.getSecret());
         });
 
         orderBook.process(order);
@@ -153,11 +145,16 @@ public class OrderEventProcessor {
     }
 
     private void sendBuffer(Channel channel, int payloadSize, int operation, Consumer<ByteBuf> payload) {
+        if (channel == null) return;
         ByteBuf byteBuf = channel.alloc().buffer(payloadSize + 1); // Size excludes operation
         byteBuf.writeByte(operation);
 
         payload.accept(byteBuf);
 
         Exchange.getInstance().getOutboundPublisher().publish(channel, byteBuf);
+    }
+
+    public OrderBook getOrderBook(long ticker) {
+        return orderBookMap.get(ticker);
     }
 }
