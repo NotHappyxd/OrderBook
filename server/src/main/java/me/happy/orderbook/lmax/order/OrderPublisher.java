@@ -2,19 +2,21 @@ package me.happy.orderbook.lmax.order;
 
 import com.lmax.disruptor.RingBuffer;
 import io.netty.channel.Channel;
-import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import me.happy.orderbook.order.Side;
 
-import java.security.SecureRandom;
 import java.util.concurrent.ThreadLocalRandom;
 
 @RequiredArgsConstructor
+@Getter
 public class OrderPublisher {
 
     private final RingBuffer<OrderEvent> ringBuffer;
     private final int shardId;
     private final int shardCount;
+    @Setter
     private long sequence = 0;
 
     public void process(long ticker, Side side, int price, int quantity, long clientRequestId, boolean kill, Channel channel) {
@@ -84,5 +86,10 @@ public class OrderPublisher {
             event.setClientRequestId(clientRequestId);
             event.setChannel(channel);
         });
+    }
+
+    public void processCheckpoint() {
+        ringBuffer.publishEvent((event, sequence) ->
+                event.setCommand(OrderEventCommand.CHECKPOINT));
     }
 }

@@ -23,9 +23,7 @@ public class CompleteOrderDecoder extends ByteToMessageDecoder {
 
         try {
             parseOperation(operation, packetBuffer, channelHandlerContext);
-            System.out.printf("Received operation: %d Size: %d\n", operation, size);
         }catch (ArrayIndexOutOfBoundsException e) {
-            System.out.printf("Invalid operation: %d Size: %d. Kicking client!\n", operation, size);
             kickClient(channelHandlerContext, 1);
         }
     }

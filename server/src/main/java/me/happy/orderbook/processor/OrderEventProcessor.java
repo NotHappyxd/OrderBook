@@ -2,15 +2,21 @@ package me.happy.orderbook.processor;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import lombok.Setter;
+import me.happy.orderbook.checkpoint.Checkpoint;
 import me.happy.orderbook.engine.OrderBook;
 import me.happy.orderbook.lmax.AllocatorPool;
 import me.happy.orderbook.lmax.Exchange;
+import me.happy.orderbook.lmax.journal.Journal;
 import me.happy.orderbook.lmax.order.OrderEvent;
+import me.happy.orderbook.lmax.order.OrderPublisher;
 import me.happy.orderbook.order.Order;
 import me.happy.orderbook.order.OrderSnapshot;
 import me.happy.orderbook.order.PriceLevel;
 import me.happy.orderbook.order.Side;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -21,6 +27,16 @@ public class OrderEventProcessor {
     private final AllocatorPool<Order> orderAllocator;
     private final Map<Long, OrderBook> orderBookMap = new HashMap<>();
 
+    @Setter
+    private Journal journal;
+    @Setter
+    private Path checkpointPath;
+    @Setter
+    private OrderPublisher orderPublisher;
+
+    private long lastMutatingSequence = 0;
+    private long lastCheckpointedSequence = -1;
+
     public OrderEventProcessor() {
         this.orderAllocator = new AllocatorPool<>(1024, Order::new);
     }
@@ -29,12 +45,22 @@ public class OrderEventProcessor {
         long start = System.nanoTime();
 
         switch (event.getCommand()) {
-            case NEW -> processOrder(event);
+            case NEW -> {
+                processOrder(event);
+                lastMutatingSequence = sequence;
+            }
             case SNAPSHOT -> processSnapshot(event, sequence);
-            case MODIFY -> processModification(event, sequence);
-            case CANCEL -> cancelOrder(event);
+            case MODIFY -> {
+                processModification(event, sequence);
+                lastMutatingSequence = sequence;
+            }
+            case CANCEL -> {
+                cancelOrder(event);
+                lastMutatingSequence = sequence;
+            }
             case REBIND -> processRebind(event);
             case STATUS -> processStatus(event);
+            case CHECKPOINT -> processCheckpoint(sequence);
         }
 
         long elapsed = System.nanoTime() - start;
@@ -194,6 +220,49 @@ public class OrderEventProcessor {
                 byteBuf.writeLong(event.getOrderId());
                 byteBuf.writeLong(event.getSecret());
             });
+        }
+    }
+
+    private void processCheckpoint(long sequence) {
+        if (journal == null || checkpointPath == null || orderPublisher == null) return;
+
+        if (lastMutatingSequence == lastCheckpointedSequence) return;
+
+        try {
+            journal.force();
+            journal.rotate();
+
+            Checkpoint.write(this.checkpointPath, sequence, orderPublisher.getSequence(), orderBookMap);
+
+            journal.markCheckpointComplete();
+
+            lastCheckpointedSequence = lastMutatingSequence;
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void restoreFromCheckpoint(Checkpoint.CheckpointData data) {
+        if (data == null) return;
+
+        for (Checkpoint.TickerState tickerState : data.tickers()) {
+            OrderBook orderBook = new OrderBook(
+                    Exchange.getInstance().getTradePublisher(),
+                    Exchange.getInstance().getMarketDataPublisher(),
+                    Exchange.getInstance().getOutboundPublisher(),
+                    this.orderAllocator, tickerState.tickerId()
+            );
+
+            for (Checkpoint.OrderRecord order : tickerState.orders()) {
+                Order restoredOrder = new Order(order.orderId(), order.secret(),
+                        order.side(), order.price(), order.quantity(), false,
+                        null, null, null, null);
+                orderBook.addToBook(restoredOrder);
+            }
+
+            orderBook.setMarketDataSequence(tickerState.marketDataSequence());
+
+            this.orderBookMap.put(tickerState.tickerId(), orderBook);
         }
     }
 

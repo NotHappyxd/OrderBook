@@ -3,6 +3,7 @@ package me.happy.orderbook.engine;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import lombok.Getter;
+import lombok.Setter;
 import me.happy.orderbook.lmax.AllocatorPool;
 import me.happy.orderbook.lmax.metadata.MarketDataPublisher;
 import me.happy.orderbook.lmax.outbound.OutboundPublisher;
@@ -29,6 +30,7 @@ public class OrderBook {
     private final AllocatorPool<PriceLevel> priceLevelAllocator;
     private final long ticker;
 
+    @Setter
     private long marketDataSequence = 0;
 
     public OrderBook(TradePublisher tradePublisher, MarketDataPublisher marketDataPublisher, OutboundPublisher outboundPublisher, AllocatorPool<Order> orderAllocator, long ticker) {
