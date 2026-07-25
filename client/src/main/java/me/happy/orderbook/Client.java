@@ -2,6 +2,8 @@ package me.happy.orderbook;
 
 import lombok.Getter;
 import me.happy.orderbook.listener.AcknowledgementListener;
+import me.happy.orderbook.listener.MarketDataListener;
+import me.happy.orderbook.listener.ReconnectListener;
 import me.happy.orderbook.order.Side;
 import me.happy.orderbook.packet.PacketManager;
 import me.happy.orderbook.packet.impl.*;
@@ -19,9 +21,12 @@ public class Client {
         this.packetManager = new PacketManager();
         this.packetManager.registerPackets(MarketOrderPacket.class, SnapshotRequestPacket.class,
                 SnapshotResponsePacket.class, OrderAcknowledgementPacket.class, OrderFilledPacket.class,
-                ServerKickPacket.class, OrderModifyPacket.class, OrderModifyAcknowledgePacket.class
+                ServerKickPacket.class, OrderModifyPacket.class, OrderModifyAcknowledgePacket.class,
+                SubscribeMarketDataPacket.class, UnsubscribeMarketDataPacket.class, MarketDataDeltaPacket.class,
+                TradePrintPacket.class, RebindOrderPacket.class, RebindAcknowledgePacket.class,
+                OrderStatusRequestPacket.class, OrderStatusResponsePacket.class
         );
-        this.packetManager.registerListeners(new AcknowledgementListener());
+        this.packetManager.registerListeners(new AcknowledgementListener(), new MarketDataListener(), new ReconnectListener());
 
         this.serverConnection = new ServerConnection(this);
         this.serverConnection.connect();
@@ -32,6 +37,8 @@ public class Client {
 
         int clientRequestId = 2;
 
+        getInstance().serverConnection.writePacket(new SubscribeMarketDataPacket("asd"));
+
         getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 1, 1, ++clientRequestId));
         getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 2, 1, ++clientRequestId));
         getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 3, 1, ++clientRequestId));
@@ -40,10 +47,14 @@ public class Client {
         getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.SELL, 3, 1, ++clientRequestId));
         Thread.sleep(1000L);
         getInstance().serverConnection.writePacket(new SnapshotRequestPacket("asd"));
+
+        // After a reconnect, you'd instead do something like:
+        //   getInstance().serverConnection.writePacket(new RebindOrderPacket("asd", savedOrderId, savedSecret, ++clientRequestId));
+        //   getInstance().serverConnection.writePacket(new OrderStatusRequestPacket("asd", savedOrderId, savedSecret, ++clientRequestId));
+        // using the orderId/secret you saved from that order's OrderAcknowledgementPacket.
     }
 
     public static Client getInstance() {
         return INSTANCE;
     }
 }
-

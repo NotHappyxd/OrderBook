@@ -15,20 +15,18 @@ public class TradePublisher {
         this.ringBuffer = ringBuffer;
     }
 
-    public void publishFill(long tickerId, long orderId, long takerId, int price, int quantity, Side takerSide) {
-        long sequence = ringBuffer.next();
+    public void publishTrade(long tickerId, long sequence, int price, int quantity, Side takerSide) {
+        long seq = ringBuffer.next();
 
         try {
-            TradeEvent event = ringBuffer.get(sequence);
+            TradeEvent event = ringBuffer.get(seq);
             event.setTickerId(tickerId);
             event.setSequence(sequence);
-            event.setOrderId(orderId);
-            event.setTakerId(takerId);
             event.setPrice(price);
             event.setQuantity(quantity);
             event.setTakerSide(takerSide);
         }finally {
-            ringBuffer.publish(sequence);
+            ringBuffer.publish(seq);
         }
     }
 }

@@ -34,7 +34,11 @@ public class AcknowledgementListener {
 
     @PacketHandler
     public void orderFilled(OrderFilledPacket packet) {
-        System.out.println(packet.getSide().name() + " Order for ticker " + packet.getTickerId() + " filled! $" + packet.getPrice() + " @ " + packet.getQuantity());
+        System.out.printf(
+                "Your %s order %d on ticker %d filled %d @ $%d (remaining: %d)%n",
+                packet.getSide(), packet.getOrderId(), packet.getTickerId(),
+                packet.getQuantity(), packet.getPrice(), packet.getRemainingQuantity()
+        );
     }
 
     @PacketHandler

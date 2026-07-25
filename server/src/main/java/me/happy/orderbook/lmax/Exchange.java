@@ -1,11 +1,14 @@
 package me.happy.orderbook.lmax;
 
 import com.lmax.disruptor.dsl.Disruptor;
-import com.lmax.disruptor.util.DaemonThreadFactory;
 import lombok.Getter;
 import me.happy.orderbook.lmax.journal.Journal;
 import me.happy.orderbook.lmax.journal.JournalHandler;
 import me.happy.orderbook.lmax.journal.JournalReplayer;
+import me.happy.orderbook.lmax.metadata.MarketDataEvent;
+import me.happy.orderbook.lmax.metadata.MarketDataEventHandler;
+import me.happy.orderbook.lmax.metadata.MarketDataPublisher;
+import me.happy.orderbook.lmax.metadata.MarketDataRegistry;
 import me.happy.orderbook.lmax.order.OrderEvent;
 import me.happy.orderbook.lmax.order.OrderPublisher;
 import me.happy.orderbook.lmax.trade.TradeEvent;
@@ -15,7 +18,6 @@ import me.happy.orderbook.lmax.outbound.OutboundEvent;
 import me.happy.orderbook.lmax.outbound.OutboundEventHandler;
 import me.happy.orderbook.lmax.outbound.OutboundPublisher;
 import me.happy.orderbook.lmax.trade.TradePublisher;
-import me.happy.orderbook.order.Side;
 import me.happy.orderbook.server.NamedThreadFactory;
 
 import java.nio.file.Path;
@@ -31,6 +33,8 @@ public class Exchange {
     private final OrderEventHandler[] handlers;
     private final TradePublisher tradePublisher;
     private final OutboundPublisher outboundPublisher;
+    private final MarketDataRegistry marketDataRegistry;
+    private final MarketDataPublisher marketDataPublisher;
 
     public Exchange(int shardCount) {
         INSTANCE = this;
@@ -39,14 +43,20 @@ public class Exchange {
         this.handlers = new OrderEventHandler[shardCount];
         int bufferSize = 1024;
 
+        this.marketDataRegistry = new MarketDataRegistry();
+
         Disruptor<TradeEvent> tradeEventDisruptor = new Disruptor<>(TradeEvent::new, bufferSize, new NamedThreadFactory("trade"));
-        TradeEventHandler tradeEventHandler = new TradeEventHandler();
+        TradeEventHandler tradeEventHandler = new TradeEventHandler(marketDataRegistry);
         tradeEventDisruptor.handleEventsWith(tradeEventHandler);
         this.tradePublisher = new TradePublisher(tradeEventHandler, tradeEventDisruptor.start());
 
         Disruptor<OutboundEvent> outboundEventDisruptor = new Disruptor<>(OutboundEvent::new, bufferSize, new NamedThreadFactory("outbound"));
         outboundEventDisruptor.handleEventsWith(new OutboundEventHandler());
         this.outboundPublisher = new OutboundPublisher(outboundEventDisruptor.start());
+
+        Disruptor<MarketDataEvent> marketDataDisruptor = new Disruptor<>(MarketDataEvent::new, bufferSize, new NamedThreadFactory("marketdata"));
+        marketDataDisruptor.handleEventsWith(new MarketDataEventHandler(marketDataRegistry));
+        this.marketDataPublisher = new MarketDataPublisher(marketDataDisruptor.start());
 
         for (int i = 0; i < shardCount; i++) {
             try {

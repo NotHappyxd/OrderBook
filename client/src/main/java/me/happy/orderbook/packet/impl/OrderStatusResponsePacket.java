@@ -7,16 +7,17 @@ import me.happy.orderbook.order.Side;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
 
-@PacketId(0x03)
+@PacketId(0x11)
 @NoArgsConstructor
 @Getter
-public class OrderFilledPacket extends Packet {
+public class OrderStatusResponsePacket extends Packet {
 
-    private long tickerId;
+    private boolean found;
+    private long clientRequestId;
     private long orderId;
+    private long tickerId;
     private int price;
-    private int quantity;          // filled in this specific match
-    private int remainingQuantity; // this order's remaining resting quantity, 0 if fully filled
+    private int quantity; // remaining resting quantity - only meaningful if found
     private Side side;
 
     @Override
@@ -26,11 +27,14 @@ public class OrderFilledPacket extends Packet {
 
     @Override
     public void read(ByteBuf buf) {
-        this.tickerId = buf.readLong();
+        this.found = buf.readByte() == 0x01;
+        this.clientRequestId = buf.readLong();
         this.orderId = buf.readLong();
+        this.tickerId = buf.readLong();
         this.price = buf.readInt();
         this.quantity = buf.readInt();
-        this.remainingQuantity = buf.readInt();
-        this.side = buf.readByte() == 0x01 ? Side.BUY : Side.SELL;
+
+        byte side = buf.readByte();
+        this.side = side == 0x01 ? Side.BUY : side == 0x02 ? Side.SELL : null;
     }
 }

@@ -1,5 +1,6 @@
 package me.happy.orderbook.order;
 
+import io.netty.channel.Channel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,8 @@ public class Order {
     private Order next;
     private Order previous;
     private PriceLevel priceLevel;
+
+    private transient Channel channel;
 
     public void reset() {
         this.id = 0;

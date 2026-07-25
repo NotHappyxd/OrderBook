@@ -7,17 +7,16 @@ import me.happy.orderbook.order.Side;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
 
-@PacketId(0x03)
+@PacketId(0x0D)
 @NoArgsConstructor
 @Getter
-public class OrderFilledPacket extends Packet {
+public class TradePrintPacket extends Packet {
 
     private long tickerId;
-    private long orderId;
+    private long sequence;
     private int price;
-    private int quantity;          // filled in this specific match
-    private int remainingQuantity; // this order's remaining resting quantity, 0 if fully filled
-    private Side side;
+    private int quantity;
+    private Side aggressorSide;
 
     @Override
     public void write(ByteBuf buf) {
@@ -27,10 +26,9 @@ public class OrderFilledPacket extends Packet {
     @Override
     public void read(ByteBuf buf) {
         this.tickerId = buf.readLong();
-        this.orderId = buf.readLong();
+        this.sequence = buf.readLong();
         this.price = buf.readInt();
         this.quantity = buf.readInt();
-        this.remainingQuantity = buf.readInt();
-        this.side = buf.readByte() == 0x01 ? Side.BUY : Side.SELL;
+        this.aggressorSide = buf.readByte() == 0x01 ? Side.BUY : Side.SELL;
     }
 }

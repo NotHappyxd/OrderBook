@@ -9,8 +9,8 @@ import me.happy.orderbook.lmax.order.OrderEvent;
 import me.happy.orderbook.order.Order;
 import me.happy.orderbook.order.OrderSnapshot;
 import me.happy.orderbook.order.PriceLevel;
+import me.happy.orderbook.order.Side;
 
-import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -33,11 +33,60 @@ public class OrderEventProcessor {
             case SNAPSHOT -> processSnapshot(event, sequence);
             case MODIFY -> processModification(event, sequence);
             case CANCEL -> cancelOrder(event);
+            case REBIND -> processRebind(event);
+            case STATUS -> processStatus(event);
         }
 
         long elapsed = System.nanoTime() - start;
 
         System.out.println("Order event took " + elapsed + " ns to complete. (" + TimeUnit.NANOSECONDS.toMillis(elapsed) + " ms)");
+    }
+
+    private void processStatus(OrderEvent event) {
+        OrderBook orderBook = orderBookMap.get(event.getTicker());
+        Order order = null;
+
+        if (orderBook != null) {
+            Order candidate = orderBook.getOrderMap().get(event.getOrderId());
+
+            if (candidate != null && candidate.getSecret() == event.getSecret()) {
+                order = candidate;
+            }
+        }
+
+        Order finalOrder = order;
+        boolean found = finalOrder != null;
+
+        sendBuffer(event.getChannel(), 34, 0x11, byteBuf -> {
+            byteBuf.writeByte(found ? 1 : 0);
+            byteBuf.writeLong(event.getClientRequestId());
+            byteBuf.writeLong(event.getOrderId());
+            byteBuf.writeLong(event.getTicker());
+            byteBuf.writeInt(found ? finalOrder.getPrice() : 0);
+            byteBuf.writeInt(found ? finalOrder.getQuantity() : 0);
+            byteBuf.writeByte(found ? (finalOrder.getSide() == Side.BUY ? 1 : 2) : 0);
+        });
+    }
+
+    private void processRebind(OrderEvent event) {
+        OrderBook orderBook = orderBookMap.get(event.getTicker());
+        boolean changed = false;
+
+        if (orderBook != null) {
+            Order order = orderBook.getOrderMap().get(event.getOrderId());
+
+            if (order != null && order.getSecret() == event.getSecret()) {
+                order.setChannel(event.getChannel());
+                changed = true;
+            }
+        }
+
+        boolean finalChanged = changed;
+        sendBuffer(event.getChannel(), 17, 0x10, byteBuf -> {
+            byteBuf.writeBoolean(finalChanged);
+            byteBuf.writeLong(event.getClientRequestId());
+            byteBuf.writeLong(event.getOrderId());
+        });
     }
 
     private void processModification(OrderEvent event, long sequence) {
@@ -59,10 +108,13 @@ public class OrderEventProcessor {
             int diff = event.getQuantity() - order.getQuantity();
             priceLevel.setTotalQuantity(priceLevel.getTotalQuantity() + diff);
             order.setQuantity(order.getQuantity());
-        }else if (order.getQuantity() < event.getQuantity() || priceChanged) {
+
+            orderBook.publishLevelUpdate(order.getSide(), order.getPrice(), priceLevel.getTotalQuantity());
+        } else if (order.getQuantity() < event.getQuantity() || priceChanged) {
             priceLevel.removeOrder(order);
             priceLevel.setTotalQuantity(priceLevel.getTotalQuantity() - order.getQuantity());
 
+            orderBook.reconcileLevel(order.getSide(), order.getPrice());
             if (priceChanged)
                 order.setPrice(event.getPrice());
 
@@ -104,11 +156,12 @@ public class OrderEventProcessor {
         order.setPrice(event.getPrice());
         order.setSecret(event.getSecret());
         order.setKill(event.isKill());
+        order.setChannel(event.getChannel());
 
         OrderBook orderBook = orderBookMap.get(event.getTicker());
 
         if (orderBook == null) {
-            orderBook = new OrderBook(Exchange.getInstance().getTradePublisher(), this.orderAllocator, event.getTicker());
+            orderBook = new OrderBook(Exchange.getInstance().getTradePublisher(), Exchange.getInstance().getMarketDataPublisher(), Exchange.getInstance().getOutboundPublisher(), this.orderAllocator, event.getTicker());
             this.orderBookMap.put(event.getTicker(), orderBook);
         }
 

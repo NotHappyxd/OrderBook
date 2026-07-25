@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import me.happy.orderbook.order.Side;
 
 import java.security.SecureRandom;
+import java.util.concurrent.ThreadLocalRandom;
 
 @RequiredArgsConstructor
 public class OrderPublisher {
@@ -15,8 +16,6 @@ public class OrderPublisher {
     private final int shardId;
     private final int shardCount;
     private long sequence = 0;
-    private final SecureRandom secureRandom = new SecureRandom();
-
 
     public void process(long ticker, Side side, int price, int quantity, long clientRequestId, boolean kill, Channel channel) {
         ringBuffer.publishEvent((event, sequence) -> {
@@ -29,7 +28,7 @@ public class OrderPublisher {
             event.setClientRequestId(clientRequestId);
             event.setKill(kill);
             event.setOrderId((++this.sequence * shardCount) + shardId);
-            event.setSecret(secureRandom.nextLong());
+            event.setSecret(ThreadLocalRandom.current().nextLong());
         });
     }
 
@@ -61,6 +60,28 @@ public class OrderPublisher {
             event.setTicker(ticker);
             event.setSecret(secret);
 
+            event.setChannel(channel);
+        });
+    }
+
+    public void processRebind(long ticker, long orderId, long secret, long clientRequestId, Channel channel) {
+        ringBuffer.publishEvent((event, sequence) -> {
+            event.setCommand(OrderEventCommand.REBIND);
+            event.setTicker(ticker);
+            event.setOrderId(orderId);
+            event.setSecret(secret);
+            event.setClientRequestId(clientRequestId);
+            event.setChannel(channel);
+        });
+    }
+
+    public void processStatusQuery(long ticker, long orderId, long secret, long clientRequestId, Channel channel) {
+        ringBuffer.publishEvent((event, sequence) -> {
+            event.setCommand(OrderEventCommand.STATUS);
+            event.setTicker(ticker);
+            event.setOrderId(orderId);
+            event.setSecret(secret);
+            event.setClientRequestId(clientRequestId);
             event.setChannel(channel);
         });
     }

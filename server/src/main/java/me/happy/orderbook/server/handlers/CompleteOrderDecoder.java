@@ -81,6 +81,48 @@ public class CompleteOrderDecoder extends ByteToMessageDecoder {
                 exchange.getPublisher(ticker).processModification(ticker, orderId, secretId, clientSideRequestId, quantity, price, context.channel());
                 break;
             }
+
+            case 0x0A: {
+                long tickerId = safeReadLong(byteBuf);
+
+                if (isInvalidLength(byteBuf, context)) return;
+
+                exchange.getMarketDataRegistry().subscribe(tickerId, context.channel());
+                break;
+            }
+
+            case 0x0B: {
+                long tickerId = safeReadLong(byteBuf);
+
+                if (isInvalidLength(byteBuf, context)) return;
+
+                exchange.getMarketDataRegistry().unsubscribe(tickerId, context.channel());
+                break;
+            }
+
+            case 0x0E: {
+                long tickerId = safeReadLong(byteBuf);
+                long orderId = safeReadLong(byteBuf);
+                long secret = safeReadLong(byteBuf);
+                long clientRequestId = safeReadLong(byteBuf);
+
+                if (isInvalidLength(byteBuf, context)) throw new ArrayIndexOutOfBoundsException();
+
+                exchange.getPublisher(tickerId).processRebind(tickerId, orderId, secret, clientRequestId, context.channel());
+                break;
+            }
+
+            case 0x0F: {
+                long tickerId = safeReadLong(byteBuf);
+                long orderId = safeReadLong(byteBuf);
+                long secret = safeReadLong(byteBuf);
+                long clientRequestId = safeReadLong(byteBuf);
+
+                if (isInvalidLength(byteBuf, context)) throw new ArrayIndexOutOfBoundsException();
+
+                exchange.getPublisher(tickerId).processStatusQuery(tickerId, orderId, secret, clientRequestId, context.channel());
+                break;
+            }
         }
     }
 
