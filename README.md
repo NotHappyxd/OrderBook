@@ -178,6 +178,4 @@ Potential additions:
 * Market order support
 * Performance benchmarks
 * Circuit breakers
-
-```
-```
+* Improve cold-start times
