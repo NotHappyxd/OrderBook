@@ -9,9 +9,9 @@ import java.util.concurrent.TimeUnit;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Thread)
-@Warmup(iterations = 3, time = 1)
-@Measurement(iterations = 5, time = 1)
-@Fork(1)
+@Warmup(iterations = 5, time = 2)
+@Measurement(iterations = 10, time = 1)
+@Fork(3)
 public class OrderBookCancelBenchmark {
     private static final int BATCH = 2_000;
     private static final int BASE_PRICE = 100;

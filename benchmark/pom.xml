@@ -48,7 +48,7 @@
     </dependencies>
 
     <build>
-        <finalName>benchmark.jar</finalName>
+        <finalName>benchmark</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -76,7 +76,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <finalName>benchmark.jar</finalName>
+                            <finalName>benchmark</finalName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>org.openjdk.jmh.Main</mainClass>
