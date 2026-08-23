@@ -34,5 +34,5 @@ These benchmarks are the theoretical maximums. They exclude networking (ingress/
 Object pooling has more latency than plain allocation, however it has more predictable performances. Pooling results in less allocations and lot less calls to the garbage collector, further improving predictability.
 | Benchmark | Latency (ns/op) | Alloc rate | Alloc/op | GC count | GC time |
 |---|---|---|---|---|---|
-| `AllocatorPoolBenchmark.plainAllocation` | 2.093 ± 0.156 | 29,166.904 ± 2,125.569 MB/s | 64.000 ± 0.001 B/op | 107 | 50 ms |
-| `AllocatorPoolBenchmark.pooledBorrowRelease` | 2.512 ± 0.027 | 0.007 ± 0.001 MB/s | ≈10⁻⁵ B/op | ≈0 | ≈0 ms |
+| `AllocatorPoolBenchmark.plainAllocation` | 2.196 ± 0.043 | 27,806.306 ± 531.021 MB/s | 64.000 ± 0.001 B/op | 918 | 439 ms |
+| `AllocatorPoolBenchmark.pooledBorrowRelease` | 2.524 ± 0.007 | 0.007 ± 0.001 MB/s | ≈10⁻⁵ B/op | ≈0 | ≈0 ms |
