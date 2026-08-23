@@ -16,18 +16,18 @@ These benchmarks are the theoretical maximums. They exclude networking (ingress/
 
 | Benchmark | Params | Score ± Error | Units | Per-op |
 |---|---|---|---|---|
-| `OrderBookRestingInsertBenchmark.insertRestingOrders` | preloadDepth=0 | 183.844 ± 12.252 | ns/op | — |
-| `OrderBookRestingInsertBenchmark.insertRestingOrders` | preloadDepth=10000 | 180.657 ± 9.664 | ns/op | — |
-| `OrderBookRestingInsertBenchmark.insertRestingOrders` | preloadDepth=100000 | 209.171 ± 26.424 | ns/op | — |
-| `OrderBookCancelBenchmark.cancelRestingOrders` | bookDepth=5000 | 340.009 ± 26.534 | µs/op (batch) | 170.0 ns |
-| `OrderBookCancelBenchmark.cancelRestingOrders` | bookDepth=50000 | 412.984 ± 32.647 | µs/op (batch) | 206.5 ns |
-| `OrderBookMatchingSingleLevelBenchmark.matchAgainstDeepQueue` | queueDepth=5000 | 598.308 ± 61.816 | µs/op (batch) | 299.2 ns |
-| `OrderBookMatchingSingleLevelBenchmark.matchAgainstDeepQueue` | queueDepth=50000 | 624.865 ± 54.592 | µs/op (batch) | 312.4 ns |
-| `OrderBookMatchingManyLevelsBenchmark.matchAndDrainLevels` | bookDepth=5000 | 697.667 ± 71.276 | µs/op (batch) | 348.8 ns |
-| `OrderBookMatchingManyLevelsBenchmark.matchAndDrainLevels` | bookDepth=50000 | 878.408 ± 46.726 | µs/op (batch) | 439.2 ns |
-| `PriceLevelFifoBenchmark.churnFifo` | steadyDepth=1 | 4.709 ± 0.252 | ns/op | — |
-| `PriceLevelFifoBenchmark.churnFifo` | steadyDepth=1000 | 4.532 ± 0.178 | ns/op | — |
-| `OrderBookMixedWorkloadBenchmark.mixedTraffic` | — | 3,173,757.77 ± 239,460.52 | ops/s | — |
+| `OrderBookRestingInsertBenchmark.insertRestingOrders` | preloadDepth=0 | 152.387 ± 4.615 | ns/op | — |
+| `OrderBookRestingInsertBenchmark.insertRestingOrders` | preloadDepth=10000 | 160.550 ± 5.187 | ns/op | — |
+| `OrderBookRestingInsertBenchmark.insertRestingOrders` | preloadDepth=100000 | 177.590 ± 7.191 | ns/op | — |
+| `OrderBookCancelBenchmark.cancelRestingOrders` | bookDepth=5000 | 285.325 ± 13.120 | µs/op (batch) | 142.7 ns |
+| `OrderBookCancelBenchmark.cancelRestingOrders` | bookDepth=50000 | 343.359 ± 12.596 | µs/op (batch) | 171.7 ns |
+| `OrderBookMatchingSingleLevelBenchmark.matchAgainstDeepQueue` | queueDepth=5000 | 467.798 ± 14.843 | µs/op (batch) | 233.9 ns |
+| `OrderBookMatchingSingleLevelBenchmark.matchAgainstDeepQueue` | queueDepth=50000 | 481.483 ± 24.727 | µs/op (batch) | 240.7 ns |
+| `OrderBookMatchingManyLevelsBenchmark.matchAndDrainLevels` | bookDepth=5000 | 568.003 ± 8.299 | µs/op (batch) | 284.0 ns |
+| `OrderBookMatchingManyLevelsBenchmark.matchAndDrainLevels` | bookDepth=50000 | 679.537 ± 15.231 | µs/op (batch) | 339.8 ns |
+| `PriceLevelFifoBenchmark.churnFifo` | steadyDepth=1 | 3.313 ± 0.051 | ns/op | — |
+| `PriceLevelFifoBenchmark.churnFifo` | steadyDepth=1000 | 3.493 ± 0.031 | ns/op | — |
+| `OrderBookMixedWorkloadBenchmark.mixedTraffic` | — | 4,325,892.59 ± 93,790.37 | ops/s | — |
 
 ### Object pool vs. plain allocation
 
