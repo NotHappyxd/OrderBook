@@ -1,6 +1,6 @@
 ## Benchmark Results
 
-**Environment:** JDK 26.0.2 (OpenJDK 64-Bit Server VM) · JMH 1.37 · 1 fork · warmup 3×1s · measurement 5×1s (2s for mixed workload)
+**Environment:** JDK 26.0.2 (OpenJDK 64-Bit Server VM) · JMH 1.37 · 3 forks · warmup 5×2s · measurement 10×1s (5x2s for mixed workload)
 
 **OS:** Arch Linux
 
