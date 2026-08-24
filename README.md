@@ -142,7 +142,7 @@ Processing flow:
 
 To maintain consistency across restarts, each shard periodically creates a snapshot of its current state.
 
-Between snapshots, all state-changing events are written to a journal.
+Between snapshots, we use a write-ahead log to keep track of all state-changing events in a journal.
 
 Recovery process:
 
