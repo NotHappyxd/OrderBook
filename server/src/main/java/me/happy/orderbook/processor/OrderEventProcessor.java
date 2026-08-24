@@ -42,8 +42,6 @@ public class OrderEventProcessor {
     }
 
     public void process(OrderEvent event, long sequence, boolean endOfBatch) {
-        long start = System.nanoTime();
-
         switch (event.getCommand()) {
             case NEW -> {
                 processOrder(event);
@@ -62,10 +60,6 @@ public class OrderEventProcessor {
             case STATUS -> processStatus(event);
             case CHECKPOINT -> processCheckpoint(sequence);
         }
-
-        long elapsed = System.nanoTime() - start;
-
-        System.out.println("Order event took " + elapsed + " ns to complete. (" + TimeUnit.NANOSECONDS.toMillis(elapsed) + " ms)");
     }
 
     private void processStatus(OrderEvent event) {
@@ -179,6 +173,7 @@ public class OrderEventProcessor {
         order.setSide(event.getSide());
         order.setId(event.getOrderId());
         order.setQuantity(event.getQuantity());
+        order.setMarketPrice(event.isMarketPrice());
         order.setPrice(event.getPrice());
         order.setSecret(event.getSecret());
         order.setKill(event.isKill());
@@ -255,7 +250,7 @@ public class OrderEventProcessor {
 
             for (Checkpoint.OrderRecord order : tickerState.orders()) {
                 Order restoredOrder = new Order(order.orderId(), order.secret(),
-                        order.side(), order.price(), order.quantity(), false,
+                        order.side(), order.marketPrice(), order.price(), order.quantity(), false,
                         null, null, null, null);
                 orderBook.addToBook(restoredOrder);
             }

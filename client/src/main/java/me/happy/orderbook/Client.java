@@ -40,11 +40,7 @@ public class Client {
         getInstance().serverConnection.writePacket(new SubscribeMarketDataPacket("asd"));
 
         getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 1, 1, ++clientRequestId));
-        getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 2, 1, ++clientRequestId));
-        getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 3, 1, ++clientRequestId));
-        getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.SELL, 5, 1, ++clientRequestId));
-        getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.SELL, 4, 1, ++clientRequestId));
-        getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.SELL, 3, 1, ++clientRequestId));
+        getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.SELL, true, 1, 1, ++clientRequestId, false));
         Thread.sleep(1000L);
         getInstance().serverConnection.writePacket(new SnapshotRequestPacket("asd"));
 

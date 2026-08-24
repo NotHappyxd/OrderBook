@@ -19,12 +19,13 @@ public class OrderPublisher {
     @Setter
     private long sequence = 0;
 
-    public void process(long ticker, Side side, int price, int quantity, long clientRequestId, boolean kill, Channel channel) {
+    public void process(long ticker, Side side, boolean marketPrice, int price, int quantity, long clientRequestId, boolean kill, Channel channel) {
         ringBuffer.publishEvent((event, sequence) -> {
             event.setCommand(OrderEventCommand.NEW);
             event.setTicker(ticker);
             event.setChannel(channel);
             event.setSide(side);
+            event.setMarketPrice(marketPrice);
             event.setPrice(price);
             event.setQuantity(quantity);
             event.setClientRequestId(clientRequestId);

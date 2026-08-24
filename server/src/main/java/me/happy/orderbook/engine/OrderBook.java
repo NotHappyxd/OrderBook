@@ -76,7 +76,8 @@ public class OrderBook {
             Map.Entry<Integer, PriceLevel> bestEntry = book.firstEntry();
             int bestPrice = bestEntry.getKey();
 
-            if (!priceCrosses.test(bestPrice, incomingOrder.getPrice())) {
+            if (!incomingOrder.isMarketPrice()
+                    && !priceCrosses.test(bestPrice, incomingOrder.getPrice())) {
                 break;
             }
 

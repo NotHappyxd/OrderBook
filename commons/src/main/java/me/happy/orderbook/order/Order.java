@@ -15,6 +15,7 @@ public class Order {
 
     private Side side;
 
+    private boolean marketPrice = false;
     private int price;
     private int quantity;
 
@@ -29,6 +30,7 @@ public class Order {
     public void reset() {
         this.id = 0;
         this.side = null;
+        this.marketPrice = false;
         this.price = 0;
         this.quantity = 0;
         this.kill = false;

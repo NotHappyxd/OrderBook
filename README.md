@@ -8,7 +8,7 @@ Orders are received asynchronously through Netty (see the client implementation 
 
 ## Features
 
-* Limit order support *(Market Orders are not implemented yet)*
+* Market order & Limit order support
 * Fill-or-Kill (FOK) orders
 * Price-time priority matching engine
 * Order cancellation

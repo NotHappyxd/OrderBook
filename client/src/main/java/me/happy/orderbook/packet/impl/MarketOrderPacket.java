@@ -15,6 +15,7 @@ public class MarketOrderPacket extends Packet {
 
     private String tickerId;
     private Side side;
+    private boolean marketPrice = false;
     private int price;
     private int quantity;
     private long clientSideId;
@@ -33,6 +34,7 @@ public class MarketOrderPacket extends Packet {
     public void write(ByteBuf buf) {
         buf.writeLong(TickerUtils.packString(tickerId));
         buf.writeByte(side == Side.BUY ? 0x01 : 0x02);
+        buf.writeBoolean(marketPrice);
         buf.writeInt(price);
         buf.writeInt(quantity);
         buf.writeLong(clientSideId);

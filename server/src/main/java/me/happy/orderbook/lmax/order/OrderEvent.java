@@ -17,6 +17,7 @@ public class OrderEvent {
     private Channel channel;
     private Side side;
 
+    private boolean marketPrice = false;
     private int price;
     private int quantity;
 
@@ -33,6 +34,7 @@ public class OrderEvent {
         this.channel = other.channel;
         this.side = other.side;
 
+        this.marketPrice = other.marketPrice;
         this.price = other.price;
         this.quantity = other.quantity;
 

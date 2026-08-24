@@ -18,7 +18,7 @@ public class Checkpoint {
 
     private static final int MAGIC = 0x31DEC8BF;
 
-    public record OrderRecord(Side side, long orderId, long secret, int price, int quantity) {
+    public record OrderRecord(Side side, long orderId, long secret, boolean marketPrice, int price, int quantity) {
     }
 
     public record TickerState(long tickerId, long marketDataSequence, List<OrderRecord> orders) {
@@ -63,6 +63,7 @@ public class Checkpoint {
             out.writeByte(order.getSide() == Side.BUY ? 1 : 2);
             out.writeLong(order.getId());
             out.writeLong(order.getSecret());
+            out.writeBoolean(order.isMarketPrice());
             out.writeInt(order.getPrice());
             out.writeInt(order.getQuantity());
         }
@@ -115,10 +116,11 @@ public class Checkpoint {
             Side side = input.readByte() == 1 ? Side.BUY : Side.SELL;
             long id = input.readLong();
             long secret = input.readLong();
+            boolean marketPrice = input.readBoolean();
             int price = input.readInt();
             int quantity = input.readInt();
 
-            records.add(new OrderRecord(side, id, secret, price, quantity));
+            records.add(new OrderRecord(side, id, secret, marketPrice, price, quantity));
         }
 
         return new TickerState(tickerId, marketDataSequence, records);

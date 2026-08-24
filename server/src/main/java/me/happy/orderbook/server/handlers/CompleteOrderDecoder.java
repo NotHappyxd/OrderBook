@@ -33,6 +33,7 @@ public class CompleteOrderDecoder extends ByteToMessageDecoder {
             case 0x01: {
                 long tickerId = safeReadLong(byteBuf);
                 byte orderType = safeReadByte(byteBuf);
+                boolean marketPrice = safeReadBoolean(byteBuf);
                 int price = safeReadInt(byteBuf);
                 int quantity = safeReadInt(byteBuf);
                 long clientRequestId = safeReadLong(byteBuf);
@@ -40,7 +41,7 @@ public class CompleteOrderDecoder extends ByteToMessageDecoder {
 
                 if (isInvalidLength(byteBuf, context)) return;
 
-                exchange.getPublisher(tickerId).process(tickerId, orderType == 0x01 ? Side.BUY : Side.SELL, price, quantity, clientRequestId, kill, context.channel());
+                exchange.getPublisher(tickerId).process(tickerId, orderType == 0x01 ? Side.BUY : Side.SELL, marketPrice, price, quantity, clientRequestId, kill, context.channel());
 
                 break;
             }
