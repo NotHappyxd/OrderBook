@@ -42,7 +42,8 @@ public class OrderBookMixedWorkloadBenchmark {
             Side side = random.nextBoolean() ? Side.BUY : Side.SELL;
             int price = side == Side.BUY ? BASE_PRICE - random.nextInt(PRICE_SPREAD) : BASE_PRICE + random.nextInt(PRICE_SPREAD);
             long id = nextOrderId++;
-            fixture.orderBook.process(fixture.newOrder(id, side, price, 10));
+            boolean marketOrder = random.nextInt(1, 10) < 2;
+            fixture.orderBook.process(fixture.newOrder(id, side, marketOrder, price, 10));
 
             if (restingIds.size() < MAX_TRACKED_RESTING_IDS)
                 restingIds.addLast(id);
@@ -61,7 +62,9 @@ public class OrderBookMixedWorkloadBenchmark {
                         ? BASE_PRICE - PRICE_SPREAD - random.nextInt(PRICE_SPREAD)
                         : BASE_PRICE + PRICE_SPREAD + random.nextInt(PRICE_SPREAD);
                 long id = nextOrderId++;
-                fixture.orderBook.process(fixture.newOrder(id, side, price, 10));
+                boolean marketOrder = random.nextInt(1, 10) < 2;
+
+                fixture.orderBook.process(fixture.newOrder(id, side, marketOrder, price, 10));
                 if (restingIds.size() < MAX_TRACKED_RESTING_IDS) restingIds.addLast(id);
             } else if (roll < 90) {
                 Side side = random.nextBoolean() ? Side.BUY : Side.SELL;

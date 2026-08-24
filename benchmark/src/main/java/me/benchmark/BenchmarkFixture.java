@@ -46,10 +46,15 @@ public class BenchmarkFixture {
     }
 
     public Order newOrder(long id, Side side, int price, int quantity) {
+        return newOrder(id, side, false, price, quantity);
+    }
+
+    public Order newOrder(long id, Side side, boolean marketOrder, int price, int quantity) {
         Order order = orderAllocator.borrow();
         order.reset();
         order.setId(id);
         order.setSide(side);
+        order.setMarketPrice(marketOrder);
         order.setPrice(price);
         order.setQuantity(quantity);
         order.setChannel(null);
