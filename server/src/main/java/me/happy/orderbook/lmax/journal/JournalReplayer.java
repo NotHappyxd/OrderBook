@@ -39,11 +39,6 @@ public class JournalReplayer {
 
                 buffer.compact();
             }
-
-            OrderBook orderBook = processor.getOrderBook(TickerUtils.packString("asd"));
-            if (orderBook == null) return;
-            System.out.println(orderBook.getBids());
-            System.out.println(orderBook.getAsks());
         }
     }
 
