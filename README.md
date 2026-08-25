@@ -175,7 +175,7 @@ The engine is designed around:
 
 Potential additions:
 
-* Market order support
-* Performance benchmarks
-* Circuit breakers
-* Improve cold-start times
+[X] Market order support
+[X] Performance benchmarks
+[ ] Circuit breakers
+[ ] Improve cold-start times
