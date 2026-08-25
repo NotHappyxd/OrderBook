@@ -38,3 +38,15 @@ build/
 
 ### Mac OS ###
 .DS_Store
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+.jdk
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
