@@ -1,6 +1,9 @@
 package me.happy.orderbook.lmax;
 
+import com.lmax.disruptor.BlockingWaitStrategy;
+import com.lmax.disruptor.BusySpinWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
+import com.lmax.disruptor.dsl.ProducerType;
 import lombok.Getter;
 import me.happy.orderbook.checkpoint.Checkpoint;
 import me.happy.orderbook.lmax.journal.Journal;
@@ -60,7 +63,7 @@ public class Exchange {
         outboundEventDisruptor.handleEventsWith(new OutboundEventHandler());
         this.outboundPublisher = new OutboundPublisher(outboundEventDisruptor.start());
 
-        Disruptor<MarketDataEvent> marketDataDisruptor = new Disruptor<>(MarketDataEvent::new, bufferSize, new NamedThreadFactory("marketdata"));
+        Disruptor<MarketDataEvent> marketDataDisruptor = new Disruptor<>(MarketDataEvent::new, bufferSize, new NamedThreadFactory("marketdata"), ProducerType.SINGLE, new BlockingWaitStrategy());
         marketDataDisruptor.handleEventsWith(new MarketDataEventHandler(marketDataRegistry));
         this.marketDataPublisher = new MarketDataPublisher(marketDataDisruptor.start());
 

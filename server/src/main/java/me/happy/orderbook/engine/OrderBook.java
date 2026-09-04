@@ -55,7 +55,15 @@ public class OrderBook {
     }
 
     public void addToBook(Order order) {
-        PriceLevel priceLevel = getBook(order).computeIfAbsent(order.getPrice(), _ -> borrowPriceLevel());
+        TreeMap<Integer, PriceLevel> book = getBook(order);
+        PriceLevel priceLevel = book.get(order.getPrice());
+
+        if (priceLevel == null) {
+            priceLevel = borrowPriceLevel();
+
+            book.put(order.getPrice(), priceLevel);
+        }
+
         priceLevel.addOrder(order);
 
         orderMap.put(order.getId(), order);
@@ -64,11 +72,49 @@ public class OrderBook {
     }
 
     public void matchBuy(Order order) {
-        match(order, asks, Side.SELL, (bestPrice, incomingPrice) -> bestPrice <= incomingPrice);
+        while (order.getQuantity() > 0 && !asks.isEmpty()) {
+            Map.Entry<Integer, PriceLevel> bestEntry = asks.firstEntry();
+            int bestPrice = bestEntry.getKey();
+
+            if (!order.isMarketPrice() && bestPrice > order.getPrice()) {
+                break;
+            }
+
+            PriceLevel priceLevel = bestEntry.getValue();
+            matchPriceLevel(order, priceLevel, bestPrice);
+
+            boolean levelEmptied = priceLevel.getHead() == null;
+
+            if (levelEmptied) {
+                priceLevelAllocator.release(priceLevel);
+                asks.remove(bestPrice);
+            }
+
+            publishLevelUpdate(Side.SELL, bestPrice, levelEmptied ? 0 : priceLevel.getTotalQuantity());
+        }
     }
 
     public void matchSell(Order order) {
-        match(order, bids, Side.BUY, (bestPrice, incomingPrice) -> bestPrice >= incomingPrice);
+        while (order.getQuantity() > 0 && !bids.isEmpty()) {
+            Map.Entry<Integer, PriceLevel> bestEntry = bids.firstEntry();
+            int bestPrice = bestEntry.getKey();
+
+            if (!order.isMarketPrice() && bestPrice < order.getPrice()) {
+                break;
+            }
+
+            PriceLevel priceLevel = bestEntry.getValue();
+            matchPriceLevel(order, priceLevel, bestPrice);
+
+            boolean levelEmptied = priceLevel.getHead() == null;
+
+            if (levelEmptied) {
+                priceLevelAllocator.release(priceLevel);
+                bids.remove(bestPrice);
+            }
+
+            publishLevelUpdate(Side.BUY, bestPrice, levelEmptied ? 0 : priceLevel.getTotalQuantity());
+        }
     }
 
     private void match(Order incomingOrder, TreeMap<Integer, PriceLevel> book, Side bookSide, BiPredicate<Integer, Integer> priceCrosses) {

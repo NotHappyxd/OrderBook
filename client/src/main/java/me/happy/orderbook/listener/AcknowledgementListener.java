@@ -15,14 +15,12 @@ public class AcknowledgementListener {
             Client.getInstance().getServerConnection().writePacket(new OrderModifyPacket(
                     TickerUtils.packString("asd"), packet.getServerOrderId(), packet.getSecret(), 100, 2, 1
             ));
-            //Client.getInstance().getServerConnection().writePacket(new OrderCancelPacket(packet.getServerOrderId(),
-            //        TickerUtils.packString("asd"), 11, packet.getSecret()));
         }
     }
 
     @PacketHandler
     public void acknowledgeModify(OrderModifyAcknowledgePacket packet) {
-        System.out.println(packet.toString());
+        System.out.println(packet.getClientSideRequestId());
     }
     @PacketHandler
     public void snapshotReceived(SnapshotResponsePacket packet) {

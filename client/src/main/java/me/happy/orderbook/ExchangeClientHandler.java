@@ -23,8 +23,6 @@ public class ExchangeClientHandler extends SimpleChannelInboundHandler<ByteBuf> 
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf in) {
-        System.out.println("Received message from server! Bytes: " + in.readableBytes());
-
         byte operation = in.getByte(in.readerIndex());
 
         Optional<Packet> packet = packetManager.getPacket(operation);
