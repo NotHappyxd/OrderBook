@@ -1,5 +1,6 @@
 package me.benchmark;
 
+import me.happy.orderbook.lmax.Exchange;
 import me.happy.orderbook.order.Side;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;

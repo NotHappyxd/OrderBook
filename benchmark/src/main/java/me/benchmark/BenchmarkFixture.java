@@ -1,6 +1,8 @@
 package me.benchmark;
 
+import com.lmax.disruptor.YieldingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
+import com.lmax.disruptor.dsl.ProducerType;
 import me.happy.orderbook.engine.OrderBook;
 import me.happy.orderbook.lmax.AllocatorPool;
 import me.happy.orderbook.lmax.metadata.MarketDataEvent;
@@ -28,16 +30,16 @@ public class BenchmarkFixture {
     public BenchmarkFixture(long ticker, int ringBufferSize, int orderPoolSize) {
         MarketDataRegistry registry = new MarketDataRegistry();
 
-        this.tradeDisruptor = new Disruptor<>(TradeEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-trade"));
+        this.tradeDisruptor = new Disruptor<>(TradeEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-trade"), ProducerType.MULTI, new YieldingWaitStrategy());
         TradeEventHandler tradeEventHandler = new TradeEventHandler(registry);
         tradeDisruptor.handleEventsWith(tradeEventHandler);
         TradePublisher tradePublisher = new TradePublisher(tradeEventHandler, tradeDisruptor.start());
 
-        this.marketDataDisruptor = new Disruptor<>(MarketDataEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-marketdata"));
+        this.marketDataDisruptor = new Disruptor<>(MarketDataEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-marketdata"), ProducerType.MULTI, new YieldingWaitStrategy());
         marketDataDisruptor.handleEventsWith(new MarketDataEventHandler(registry));
         MarketDataPublisher marketDataPublisher = new MarketDataPublisher(marketDataDisruptor.start());
 
-        this.outboundDisruptor = new Disruptor<>(OutboundEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-outbound"));
+        this.outboundDisruptor = new Disruptor<>(OutboundEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-outbound"), ProducerType.MULTI, new YieldingWaitStrategy());
         outboundDisruptor.handleEventsWith(new OutboundEventHandler());
         OutboundPublisher outboundPublisher = new OutboundPublisher(outboundDisruptor.start());
 

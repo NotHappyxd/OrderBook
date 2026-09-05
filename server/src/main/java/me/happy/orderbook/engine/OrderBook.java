@@ -217,15 +217,14 @@ public class OrderBook {
 
         if (order == null) return false;
 
-        TreeMap<Integer, PriceLevel> book = getBook(order);
-        PriceLevel priceLevel = book.get(order.getPrice());
+        PriceLevel priceLevel = order.getPriceLevel();
         priceLevel.removeOrder(order);
 
         boolean levelEmptied = priceLevel.getHead() == null;
 
         if (levelEmptied) {
             priceLevelAllocator.release(priceLevel);
-            book.remove(order.getPrice());
+            getBook(order).remove(order.getPrice());
         }
 
         publishLevelUpdate(order.getSide(), order.getPrice(), levelEmptied ? 0 : priceLevel.getTotalQuantity());
