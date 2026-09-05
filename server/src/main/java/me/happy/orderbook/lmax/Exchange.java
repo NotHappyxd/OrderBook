@@ -1,8 +1,6 @@
 package me.happy.orderbook.lmax;
 
-import com.lmax.disruptor.BlockingWaitStrategy;
-import com.lmax.disruptor.BusySpinWaitStrategy;
-import com.lmax.disruptor.YieldingWaitStrategy;
+import com.lmax.disruptor.*;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 import lombok.Getter;
@@ -48,26 +46,26 @@ public class Exchange {
 
     public Exchange(int shardCount) {
         INSTANCE = this;
+        WaitStrategy strategy = new TimeoutBlockingWaitStrategy(10, TimeUnit.MILLISECONDS);
         this.shardCount = shardCount;
         this.publishers = new OrderPublisher[shardCount];
         this.handlers = new OrderEventHandler[shardCount];
-        int bufferSize = 1024;
-
+        int bufferSize = 16 * 1024;
         this.marketDataRegistry = new MarketDataRegistry();
 
         Disruptor<TradeEvent> tradeEventDisruptor = new Disruptor<>(TradeEvent::new, bufferSize, new NamedThreadFactory("trade"),
-                ProducerType.MULTI, new BlockingWaitStrategy());
+                ProducerType.MULTI, strategy);
         TradeEventHandler tradeEventHandler = new TradeEventHandler(marketDataRegistry);
         tradeEventDisruptor.handleEventsWith(tradeEventHandler);
         this.tradePublisher = new TradePublisher(tradeEventHandler, tradeEventDisruptor.start());
 
         Disruptor<OutboundEvent> outboundEventDisruptor = new Disruptor<>(OutboundEvent::new, bufferSize, new NamedThreadFactory("outbound"),
-                ProducerType.MULTI, new BlockingWaitStrategy());
+                ProducerType.MULTI, strategy);
         outboundEventDisruptor.handleEventsWith(new OutboundEventHandler());
         this.outboundPublisher = new OutboundPublisher(outboundEventDisruptor.start());
 
         Disruptor<MarketDataEvent> marketDataDisruptor = new Disruptor<>(MarketDataEvent::new, bufferSize, new NamedThreadFactory("marketdata"),
-                ProducerType.MULTI, new BlockingWaitStrategy());
+                ProducerType.MULTI, strategy);
         marketDataDisruptor.handleEventsWith(new MarketDataEventHandler(marketDataRegistry));
         this.marketDataPublisher = new MarketDataPublisher(marketDataDisruptor.start());
 
@@ -82,7 +80,7 @@ public class Exchange {
                 JournalHandler journalHandler = new JournalHandler(journal);
 
                 Disruptor<OrderEvent> disruptor = new Disruptor<>(OrderEvent::new, bufferSize, new NamedThreadFactory("orderbook"),
-                        ProducerType.MULTI, new BlockingWaitStrategy());
+                        ProducerType.MULTI, strategy);
                 this.handlers[i] = new OrderEventHandler();
                 disruptor.handleEventsWith(journalHandler)
                         .then(this.handlers[i]);
