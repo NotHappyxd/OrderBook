@@ -16,18 +16,18 @@ These benchmarks are the theoretical maximums. They exclude networking (ingress/
 
 | Benchmark                                                     | Params              | Score ± Error            | Units         | Per-op   |
 | ------------------------------------------------------------- | ------------------- | ------------------------ | ------------- | -------- |
-| `OrderBookRestingInsertBenchmark.insertRestingOrders`         | preloadDepth=0      | 150.314 ± 5.496          | ns/op         | —        |
-| `OrderBookRestingInsertBenchmark.insertRestingOrders`         | preloadDepth=10000  | 164.413 ± 5.500          | ns/op         | —        |
-| `OrderBookRestingInsertBenchmark.insertRestingOrders`         | preloadDepth=100000 | 168.765 ± 4.266          | ns/op         | —        |
-| `OrderBookCancelBenchmark.cancelRestingOrders`                | bookDepth=5000      | 274.237 ± 9.702          | µs/op (batch) | 137.1 ns |
-| `OrderBookCancelBenchmark.cancelRestingOrders`                | bookDepth=50000     | 334.363 ± 8.762          | µs/op (batch) | 167.2 ns |
-| `OrderBookMatchingSingleLevelBenchmark.matchAgainstDeepQueue` | queueDepth=5000     | 461.220 ± 12.067         | µs/op (batch) | 230.6 ns |
-| `OrderBookMatchingSingleLevelBenchmark.matchAgainstDeepQueue` | queueDepth=50000    | 508.631 ± 21.802         | µs/op (batch) | 254.3 ns |
-| `OrderBookMatchingManyLevelsBenchmark.matchAndDrainLevels`    | bookDepth=5000      | 575.131 ± 10.047         | µs/op (batch) | 287.6 ns |
-| `OrderBookMatchingManyLevelsBenchmark.matchAndDrainLevels`    | bookDepth=50000     | 692.567 ± 18.992         | µs/op (batch) | 346.3 ns |
-| `PriceLevelFifoBenchmark.churnFifo`                           | steadyDepth=1       | 3.461 ± 0.080            | ns/op         | —        |
-| `PriceLevelFifoBenchmark.churnFifo`                           | steadyDepth=1000    | 3.468 ± 0.030            | ns/op         | —        |
-| `OrderBookMixedWorkloadBenchmark.mixedTraffic`                | —                   | 3,610,464.66 ± 140,421.18 | ops/s         | —        |
+| `OrderBookRestingInsertBenchmark.insertRestingOrders`         | preloadDepth=0      | 97.392 ± 8.195           | ns/op         | —        |
+| `OrderBookRestingInsertBenchmark.insertRestingOrders`         | preloadDepth=10000  | 130.479 ± 6.004          | ns/op         | —        |
+| `OrderBookRestingInsertBenchmark.insertRestingOrders`         | preloadDepth=100000 | 127.361 ± 16.600         | ns/op         | —        |
+| `OrderBookCancelBenchmark.cancelRestingOrders`                | bookDepth=5000      | 139.004 ± 9.731          | µs/op (batch) | 69.5 ns  |
+| `OrderBookCancelBenchmark.cancelRestingOrders`                | bookDepth=50000     | 187.362 ± 17.821         | µs/op (batch) | 93.7 ns  |
+| `OrderBookMatchingSingleLevelBenchmark.matchAgainstDeepQueue` | queueDepth=5000     | 258.181 ± 24.603         | µs/op (batch) | 129.1 ns |
+| `OrderBookMatchingSingleLevelBenchmark.matchAgainstDeepQueue` | queueDepth=50000    | 279.054 ± 22.202         | µs/op (batch) | 139.5 ns |
+| `OrderBookMatchingManyLevelsBenchmark.matchAndDrainLevels`    | bookDepth=5000      | 286.618 ± 19.541         | µs/op (batch) | 143.3 ns |
+| `OrderBookMatchingManyLevelsBenchmark.matchAndDrainLevels`    | bookDepth=50000     | 340.138 ± 15.565         | µs/op (batch) | 170.1 ns |
+| `PriceLevelFifoBenchmark.churnFifo`                           | steadyDepth=1       | 3.432 ± 0.088            | ns/op         | —        |
+| `PriceLevelFifoBenchmark.churnFifo`                           | steadyDepth=1000    | 3.530 ± 0.049            | ns/op         | —        |
+| `OrderBookMixedWorkloadBenchmark.mixedTraffic`                | —                   | 7,900,690.42 ± 742,884.17 | ops/s         | —        |
 
 ### Object pool vs. plain allocation
 
@@ -35,5 +35,5 @@ Object pooling has more latency than plain allocation, however it has more predi
 
 | Benchmark                                    | Latency (ns/op) | Alloc rate                | Alloc/op            | GC count | GC time |
 | --------------------------------------------- | --------------- | ------------------------- | ------------------- | -------- | ------- |
-| `AllocatorPoolBenchmark.plainAllocation`     | 2.091 ± 0.013   | 27,806.306 ± 531.021 MB/s | 64.000 ± 0.001 B/op | 918      | 439 ms  |
-| `AllocatorPoolBenchmark.pooledBorrowRelease` | 2.081 ± 0.004   | 0.007 ± 0.001 MB/s        | ≈10⁻⁵ B/op          | ≈0       | ≈0 ms   |
+| `AllocatorPoolBenchmark.plainAllocation`     | 2.063 ± 0.017   | 27,806.306 ± 531.021 MB/s | 64.000 ± 0.001 B/op | 918      | 439 ms  |
+| `AllocatorPoolBenchmark.pooledBorrowRelease` | 2.081 ± 0.007   | 0.007 ± 0.001 MB/s        | ≈10⁻⁵ B/op          | ≈0       | ≈0 ms   |
