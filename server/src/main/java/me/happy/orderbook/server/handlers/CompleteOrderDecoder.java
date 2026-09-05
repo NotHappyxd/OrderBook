@@ -25,6 +25,8 @@ public class CompleteOrderDecoder extends ByteToMessageDecoder {
             parseOperation(operation, packetBuffer, channelHandlerContext);
         }catch (ArrayIndexOutOfBoundsException e) {
             kickClient(channelHandlerContext, 1);
+        }finally {
+            packetBuffer.release();
         }
     }
 

@@ -38,9 +38,10 @@ public class Client {
         int clientRequestId = 2;
 
         getInstance().serverConnection.writePacket(new SubscribeMarketDataPacket("asd"));
-
-        getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 1, 1, ++clientRequestId));
-        getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.SELL, true, 1, 1, ++clientRequestId, false));
+        for (int i = 0; i < 1_000_000; i++) {
+            getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 1, 1, ++clientRequestId));
+        }
+        //getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.SELL, true, 1, 1, ++clientRequestId, false));
         Thread.sleep(1000L);
         getInstance().serverConnection.writePacket(new SnapshotRequestPacket("asd"));
 

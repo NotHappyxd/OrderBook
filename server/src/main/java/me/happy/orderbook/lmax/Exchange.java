@@ -1,5 +1,6 @@
 package me.happy.orderbook.lmax;
 
+import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.BusySpinWaitStrategy;
 import com.lmax.disruptor.YieldingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
@@ -55,18 +56,18 @@ public class Exchange {
         this.marketDataRegistry = new MarketDataRegistry();
 
         Disruptor<TradeEvent> tradeEventDisruptor = new Disruptor<>(TradeEvent::new, bufferSize, new NamedThreadFactory("trade"),
-                ProducerType.MULTI, new YieldingWaitStrategy());
+                ProducerType.MULTI, new BlockingWaitStrategy());
         TradeEventHandler tradeEventHandler = new TradeEventHandler(marketDataRegistry);
         tradeEventDisruptor.handleEventsWith(tradeEventHandler);
         this.tradePublisher = new TradePublisher(tradeEventHandler, tradeEventDisruptor.start());
 
         Disruptor<OutboundEvent> outboundEventDisruptor = new Disruptor<>(OutboundEvent::new, bufferSize, new NamedThreadFactory("outbound"),
-                ProducerType.MULTI, new YieldingWaitStrategy());
+                ProducerType.MULTI, new BlockingWaitStrategy());
         outboundEventDisruptor.handleEventsWith(new OutboundEventHandler());
         this.outboundPublisher = new OutboundPublisher(outboundEventDisruptor.start());
 
         Disruptor<MarketDataEvent> marketDataDisruptor = new Disruptor<>(MarketDataEvent::new, bufferSize, new NamedThreadFactory("marketdata"),
-                ProducerType.MULTI, new YieldingWaitStrategy());
+                ProducerType.MULTI, new BlockingWaitStrategy());
         marketDataDisruptor.handleEventsWith(new MarketDataEventHandler(marketDataRegistry));
         this.marketDataPublisher = new MarketDataPublisher(marketDataDisruptor.start());
 
@@ -81,7 +82,7 @@ public class Exchange {
                 JournalHandler journalHandler = new JournalHandler(journal);
 
                 Disruptor<OrderEvent> disruptor = new Disruptor<>(OrderEvent::new, bufferSize, new NamedThreadFactory("orderbook"),
-                        ProducerType.MULTI, new YieldingWaitStrategy());
+                        ProducerType.MULTI, new BlockingWaitStrategy());
                 this.handlers[i] = new OrderEventHandler();
                 disruptor.handleEventsWith(journalHandler)
                         .then(this.handlers[i]);

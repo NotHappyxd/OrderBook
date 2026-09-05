@@ -34,6 +34,10 @@ public class Order {
         this.price = 0;
         this.quantity = 0;
         this.kill = false;
+
+        this.next = null;
+        this.previous = null;
+        this.priceLevel = null;
     }
 
     @Override

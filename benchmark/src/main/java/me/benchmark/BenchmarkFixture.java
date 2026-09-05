@@ -64,6 +64,9 @@ public class BenchmarkFixture {
     }
 
     public void resetBook() {
+        orderBook.getOrderMap().values().forEach(orderAllocator::release);
+        orderBook.getBids().values().forEach(value -> orderBook.getPriceLevelAllocator().release(value));
+        orderBook.getAsks().values().forEach(value -> orderBook.getPriceLevelAllocator().release(value));
         orderBook.getBids().clear();
         orderBook.getAsks().clear();
         orderBook.getOrderMap().clear();
