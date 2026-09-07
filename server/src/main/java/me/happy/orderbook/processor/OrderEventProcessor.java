@@ -2,12 +2,12 @@ package me.happy.orderbook.processor;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import lombok.Getter;
 import lombok.Setter;
 import me.happy.orderbook.checkpoint.Checkpoint;
 import me.happy.orderbook.engine.OrderBook;
 import me.happy.orderbook.lmax.AllocatorPool;
 import me.happy.orderbook.lmax.Exchange;
-import me.happy.orderbook.lmax.journal.Journal;
 import me.happy.orderbook.lmax.order.OrderEvent;
 import me.happy.orderbook.lmax.order.OrderPublisher;
 import me.happy.orderbook.order.Order;
@@ -21,13 +21,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+@Getter
 public class OrderEventProcessor {
 
     private final AllocatorPool<Order> orderAllocator;
     private final Map<Long, OrderBook> orderBookMap = new HashMap<>();
 
-    @Setter
-    private Journal journal;
     @Setter
     private Path checkpointPath;
     @Setter
@@ -58,6 +57,9 @@ public class OrderEventProcessor {
             case REBIND -> processRebind(event);
             case STATUS -> processStatus(event);
             case CHECKPOINT -> processCheckpoint(sequence);
+            case JOURNAL_FORCE, CHECKPOINT_COMPLETE -> {
+                // Journal control events are handled upstream by JournalHandler.
+            }
         }
     }
 
@@ -218,20 +220,18 @@ public class OrderEventProcessor {
     }
 
     private void processCheckpoint(long sequence) {
-        if (journal == null || checkpointPath == null || orderPublisher == null) return;
+        if (checkpointPath == null || orderPublisher == null) return;
 
-        if (lastMutatingSequence == lastCheckpointedSequence) return;
+        if (lastMutatingSequence == lastCheckpointedSequence) {
+            orderPublisher.processCheckpointComplete();
+            return;
+        }
 
         try {
-            journal.force();
-            journal.rotate();
-
-            Checkpoint.write(this.checkpointPath, sequence, orderPublisher.getSequence(), orderBookMap);
-
-            journal.markCheckpointComplete();
-
+            Checkpoint.write(checkpointPath, sequence, orderPublisher.getSequence(), orderBookMap);
             lastCheckpointedSequence = lastMutatingSequence;
-        }catch (IOException e) {
+            orderPublisher.processCheckpointComplete();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -244,7 +244,7 @@ public class OrderEventProcessor {
                     Exchange.getInstance().getTradePublisher(),
                     Exchange.getInstance().getMarketDataPublisher(),
                     Exchange.getInstance().getOutboundPublisher(),
-                    this.orderAllocator, tickerState.tickerId()
+                    orderAllocator, tickerState.tickerId()
             );
 
             for (Checkpoint.OrderRecord order : tickerState.orders()) {
@@ -255,8 +255,7 @@ public class OrderEventProcessor {
             }
 
             orderBook.setMarketDataSequence(tickerState.marketDataSequence());
-
-            this.orderBookMap.put(tickerState.tickerId(), orderBook);
+            orderBookMap.put(tickerState.tickerId(), orderBook);
         }
     }
 

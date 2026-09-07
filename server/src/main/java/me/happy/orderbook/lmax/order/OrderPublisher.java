@@ -93,4 +93,12 @@ public class OrderPublisher {
         ringBuffer.publishEvent((event, sequence) ->
                 event.setCommand(OrderEventCommand.CHECKPOINT));
     }
+
+    public void processOSWrite() {
+        ringBuffer.publishEvent((event, sequence) -> event.setCommand(OrderEventCommand.JOURNAL_FORCE));
+    }
+
+    public void processCheckpointComplete() {
+        ringBuffer.publishEvent((event, sequence) -> event.setCommand(OrderEventCommand.CHECKPOINT_COMPLETE));
+    }
 }

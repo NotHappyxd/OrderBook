@@ -40,7 +40,9 @@ public class Journal implements Closeable {
         if (event.getCommand() == OrderEventCommand.SNAPSHOT
                 || event.getCommand() == OrderEventCommand.REBIND
                 || event.getCommand() == OrderEventCommand.STATUS
-                || event.getCommand() == OrderEventCommand.CHECKPOINT) return;
+                || event.getCommand() == OrderEventCommand.CHECKPOINT
+                || event.getCommand() == OrderEventCommand.JOURNAL_FORCE
+                || event.getCommand() == OrderEventCommand.CHECKPOINT_COMPLETE) return;
 
         if (buffer.remaining() < LENGTH) {
             flush();
@@ -72,7 +74,18 @@ public class Journal implements Closeable {
     }
 
     public void force() throws IOException {
+        force(true);
+    }
+
+    public void force(boolean forceOsWrite) throws IOException {
         flush();
+
+        if (forceOsWrite) {
+            writeBufferToOs();
+        }
+    }
+
+    public void writeBufferToOs() throws IOException {
         channel.force(false);
     }
 

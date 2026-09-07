@@ -77,18 +77,19 @@ public class Exchange {
                 Path checkpointPath = Paths.get("logs", "shard-" + i + ".checkpoint");
 
                 Journal journal = new Journal(path);
-                JournalHandler journalHandler = new JournalHandler(journal);
 
                 Disruptor<OrderEvent> disruptor = new Disruptor<>(OrderEvent::new, bufferSize, new NamedThreadFactory("orderbook"),
                         ProducerType.MULTI, strategy);
                 this.handlers[i] = new OrderEventHandler();
+
+                JournalHandler journalHandler = new JournalHandler(journal);
+
                 disruptor.handleEventsWith(journalHandler)
                         .then(this.handlers[i]);
 
                 publishers[i] = new OrderPublisher(disruptor.start(), i, shardCount);
 
                 OrderEventProcessor processor = handlers[i].getProcessor();
-                processor.setJournal(journal);
                 processor.setCheckpointPath(checkpointPath);
                 processor.setOrderPublisher(publishers[i]);
 
@@ -110,6 +111,11 @@ public class Exchange {
                 checkpointScheduler.scheduleAtFixedRate(
                         publishers[i]::processCheckpoint, 60, 60, TimeUnit.SECONDS
                 );
+
+                checkpointScheduler.scheduleAtFixedRate(
+                        publishers[i]::processOSWrite, 10, 10, TimeUnit.MILLISECONDS
+                );
+
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
