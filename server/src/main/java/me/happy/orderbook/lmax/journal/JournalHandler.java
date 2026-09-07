@@ -2,7 +2,6 @@ package me.happy.orderbook.lmax.journal;
 
 import com.lmax.disruptor.EventHandler;
 import me.happy.orderbook.lmax.order.OrderEvent;
-import me.happy.orderbook.lmax.order.OrderEventCommand;
 
 public class JournalHandler implements EventHandler<OrderEvent> {
 
@@ -22,7 +21,7 @@ public class JournalHandler implements EventHandler<OrderEvent> {
             }
             case CHECKPOINT_COMPLETE -> journal.markCheckpointComplete();
             default -> {
-                journal.append(event);
+                journal.append(event, sequence);
 
                 if (endOfBatch) {
                     journal.flush();

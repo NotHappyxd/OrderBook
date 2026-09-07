@@ -15,7 +15,11 @@ import java.nio.file.StandardOpenOption;
 
 public class Journal implements Closeable {
 
-    public static final int LENGTH;
+    public static final int MAGIC = 0x4A4E4C32;
+    public static final int VERSION = 2;
+    public static final int HEADER_LENGTH = Integer.BYTES + Integer.BYTES;
+    public static final int LENGTH = Short.BYTES + Long.BYTES + Long.BYTES + Long.BYTES
+            + Long.BYTES + Short.BYTES + Integer.BYTES + Integer.BYTES + 1;
     private static final int BUFFER_SIZE = 256 * 1024;
     private FileChannel channel;
     private final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
@@ -28,6 +32,7 @@ public class Journal implements Closeable {
         this.path = path;
         this.pendingPath = path.resolveSibling(path.getFileName() + ".pending");
         this.channel = open(this.path);
+        initializeOrVerifyHeader(this.channel, this.path);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
@@ -38,7 +43,7 @@ public class Journal implements Closeable {
         }));
     }
 
-    public void append(OrderEvent event) throws IOException {
+    public void append(OrderEvent event, long sequence) throws IOException {
         if (event.getCommand() == OrderEventCommand.SNAPSHOT
                 || event.getCommand() == OrderEventCommand.REBIND
                 || event.getCommand() == OrderEventCommand.STATUS
@@ -51,6 +56,7 @@ public class Journal implements Closeable {
         }
 
         buffer.putShort((short) event.getCommand().getId());
+        buffer.putLong(sequence);
         buffer.putLong(event.getTicker());
         buffer.putLong(event.getOrderId());
         buffer.putLong(event.getSecret());
@@ -105,6 +111,7 @@ public class Journal implements Closeable {
         Files.deleteIfExists(freshTemp);
 
         try (FileChannel freshChannel = FileChannel.open(freshTemp, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+            writeHeader(freshChannel);
             freshChannel.force(true);
         }
 
@@ -116,8 +123,52 @@ public class Journal implements Closeable {
     private FileChannel open(Path path) throws IOException {
         return FileChannel.open(path,
                 StandardOpenOption.CREATE,
+                StandardOpenOption.READ,
                 StandardOpenOption.WRITE,
                 StandardOpenOption.APPEND);
+    }
+
+    public static void verifyHeader(FileChannel channel, Path path) throws IOException {
+        if (channel.size() < HEADER_LENGTH) {
+            throw new IOException("Journal " + path + " is missing a complete header");
+        }
+
+        ByteBuffer header = ByteBuffer.allocate(HEADER_LENGTH);
+        while (header.hasRemaining()) {
+            int bytesRead = channel.read(header, header.position());
+
+            if (bytesRead <= 0) {
+                throw new IOException("Could not read journal header from " + path);
+            }
+        }
+
+        header.flip();
+        int magic = header.getInt();
+        int version = header.getInt();
+
+        if (magic != MAGIC || version != VERSION) {
+            throw new IOException("Unsupported journal format in " + path + "; expected JNL2");
+        }
+    }
+
+    private void initializeOrVerifyHeader(FileChannel channel, Path path) throws IOException {
+        if (channel.size() == 0) {
+            writeHeader(channel);
+            return;
+        }
+
+        verifyHeader(channel, path);
+    }
+
+    private void writeHeader(FileChannel channel) throws IOException {
+        ByteBuffer header = ByteBuffer.allocate(HEADER_LENGTH);
+        header.putInt(MAGIC);
+        header.putInt(VERSION);
+        header.flip();
+
+        while (header.hasRemaining()) {
+            channel.write(header);
+        }
     }
 
     public boolean hasPendingRotation() {
@@ -134,8 +185,4 @@ public class Journal implements Closeable {
         channel.close();
     }
 
-    static {
-        LENGTH = Short.BYTES + Long.BYTES + Long.BYTES + Long.BYTES
-                + Short.BYTES + Integer.BYTES + Integer.BYTES + 1;
-    }
 }

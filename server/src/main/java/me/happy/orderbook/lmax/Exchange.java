@@ -101,12 +101,13 @@ public class Exchange {
                 }
 
                 JournalReplayer journalReplayer = new JournalReplayer(Journal.LENGTH, handlers[i].getProcessor());
+                long checkpointSequence = checkpointData == null ? -1 : checkpointData.watermarkSequence();
 
                 if (journal.hasPendingRotation()) {
-                    journalReplayer.replay(journal.getPendingPath());
+                    journalReplayer.replay(journal.getPendingPath(), checkpointSequence);
                 }
 
-                journalReplayer.replay(path);
+                journalReplayer.replay(path, checkpointSequence);
 
                 checkpointScheduler.scheduleAtFixedRate(
                         publishers[i]::processCheckpoint, 60, 60, TimeUnit.SECONDS

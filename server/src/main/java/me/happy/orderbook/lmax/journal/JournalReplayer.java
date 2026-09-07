@@ -1,7 +1,5 @@
 package me.happy.orderbook.lmax.journal;
 
-import me.happy.orderbook.TickerUtils;
-import me.happy.orderbook.engine.OrderBook;
 import me.happy.orderbook.lmax.order.OrderEvent;
 import me.happy.orderbook.lmax.order.OrderEventCommand;
 import me.happy.orderbook.order.Side;
@@ -24,17 +22,19 @@ public class JournalReplayer {
         this.processor = processor;
     }
 
-    public void replay(Path journalFile) throws IOException {
+    public void replay(Path journalFile, long afterSequence) throws IOException {
         try (FileChannel channel = FileChannel.open(
                 journalFile,
                 StandardOpenOption.READ)) {
+            Journal.verifyHeader(channel, journalFile);
+            channel.position(Journal.HEADER_LENGTH);
             ByteBuffer buffer = ByteBuffer.allocateDirect(64 * 1024);
 
             while (channel.read(buffer) > 0) {
                 buffer.flip();
 
                 while (buffer.remaining() >= recordLength) {
-                    processRecord(buffer);
+                    processRecord(buffer, afterSequence);
                 }
 
                 buffer.compact();
@@ -42,8 +42,9 @@ public class JournalReplayer {
         }
     }
 
-    private void processRecord(ByteBuffer buffer) {
+    private void processRecord(ByteBuffer buffer, long afterSequence) {
         short commandId = buffer.getShort();
+        long sequence = buffer.getLong();
         long ticker = buffer.getLong();
         long orderId = buffer.getLong();
         long secret = buffer.getLong();
@@ -59,6 +60,10 @@ public class JournalReplayer {
                 .orElse(null);
 
         if (command == null) throw new RuntimeException("Could not parse OrderEventCommand id " + commandId);
+
+        if (sequence <= afterSequence) {
+            return;
+        }
 
         OrderEvent orderEvent = new OrderEvent();
 
@@ -78,8 +83,6 @@ public class JournalReplayer {
             orderEvent.setQuantity(quantity);
         }
 
-        long sequence = 0;
-
-        processor.process(orderEvent, ++sequence, false);
+        processor.process(orderEvent, sequence, false);
     }
 }
