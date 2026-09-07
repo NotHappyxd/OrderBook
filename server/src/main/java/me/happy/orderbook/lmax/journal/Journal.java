@@ -12,17 +12,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.zip.CRC32C;
 
 public class Journal implements Closeable {
 
-    public static final int MAGIC = 0x4A4E4C32;
-    public static final int VERSION = 2;
+    public static final int MAGIC = 0x4A4E4C33;
+    public static final int VERSION = 3;
     public static final int HEADER_LENGTH = Integer.BYTES + Integer.BYTES;
-    public static final int LENGTH = Short.BYTES + Long.BYTES + Long.BYTES + Long.BYTES
+    public static final int PAYLOAD_LENGTH = Short.BYTES + Long.BYTES + Long.BYTES + Long.BYTES
             + Long.BYTES + Short.BYTES + Integer.BYTES + Integer.BYTES + 1;
+    public static final int LENGTH = PAYLOAD_LENGTH + Integer.BYTES;
     private static final int BUFFER_SIZE = 256 * 1024;
     private FileChannel channel;
     private final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
+    private final byte[] recordBytes = new byte[PAYLOAD_LENGTH];
+    private final ByteBuffer recordBuffer = ByteBuffer.wrap(recordBytes);
+    private final CRC32C checksum = new CRC32C();
     private boolean hasUnforcedWrites;
     private final Path path;
     @Getter
@@ -55,20 +60,26 @@ public class Journal implements Closeable {
             flush();
         }
 
-        buffer.putShort((short) event.getCommand().getId());
-        buffer.putLong(sequence);
-        buffer.putLong(event.getTicker());
-        buffer.putLong(event.getOrderId());
-        buffer.putLong(event.getSecret());
+        recordBuffer.clear();
+        recordBuffer.putShort((short) event.getCommand().getId());
+        recordBuffer.putLong(sequence);
+        recordBuffer.putLong(event.getTicker());
+        recordBuffer.putLong(event.getOrderId());
+        recordBuffer.putLong(event.getSecret());
 
         int side = event.getCommand() == OrderEventCommand.NEW ? event.getSide().ordinal() : 0;
-        buffer.putShort((short) side);
+        recordBuffer.putShort((short) side);
 
         int price = event.getCommand() == OrderEventCommand.CANCEL ? 0 : event.getPrice();
         int quantity = event.getCommand() == OrderEventCommand.CANCEL ? 0 : event.getQuantity();
-        buffer.putInt(price);
-        buffer.putInt(quantity);
-        buffer.put(event.isKill() ? (byte) 1 : 0);
+        recordBuffer.putInt(price);
+        recordBuffer.putInt(quantity);
+        recordBuffer.put(event.isKill() ? (byte) 1 : 0);
+
+        checksum.reset();
+        checksum.update(recordBytes, 0, PAYLOAD_LENGTH);
+        buffer.put(recordBytes);
+        buffer.putInt((int) checksum.getValue());
     }
 
     public boolean flush() throws IOException {
@@ -147,7 +158,7 @@ public class Journal implements Closeable {
         int version = header.getInt();
 
         if (magic != MAGIC || version != VERSION) {
-            throw new IOException("Unsupported journal format in " + path + "; expected JNL2");
+            throw new IOException("Unsupported journal format in " + path + "; expected JNL3");
         }
     }
 

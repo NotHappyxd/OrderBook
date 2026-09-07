@@ -10,11 +10,16 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.zip.CRC32C;
+
 public class JournalReplayer {
 
     private final int recordLength;
     private final OrderEventProcessor processor;
     private final OrderEvent replayEvent = new OrderEvent();
+    private final byte[] recordBytes = new byte[Journal.PAYLOAD_LENGTH];
+    private final ByteBuffer recordBuffer = ByteBuffer.wrap(recordBytes);
+    private final CRC32C checksum = new CRC32C();
 
     public JournalReplayer(int recordLength, OrderEventProcessor processor) {
         this.recordLength = recordLength;
@@ -41,17 +46,28 @@ public class JournalReplayer {
         }
     }
 
-    private void processRecord(ByteBuffer buffer, long afterSequence) {
-        short commandId = buffer.getShort();
-        long sequence = buffer.getLong();
-        long ticker = buffer.getLong();
-        long orderId = buffer.getLong();
-        long secret = buffer.getLong();
+    private void processRecord(ByteBuffer buffer, long afterSequence) throws IOException {
+        buffer.get(recordBytes);
+        int expectedChecksum = buffer.getInt();
 
-        short side = buffer.getShort();
-        int price = buffer.getInt();
-        int quantity = buffer.getInt();
-        boolean kill = buffer.get() == 1;
+        checksum.reset();
+        checksum.update(recordBytes, 0, Journal.PAYLOAD_LENGTH);
+
+        if ((int) checksum.getValue() != expectedChecksum) {
+            throw new IOException("Journal record checksum mismatch");
+        }
+
+        recordBuffer.clear();
+        short commandId = recordBuffer.getShort();
+        long sequence = recordBuffer.getLong();
+        long ticker = recordBuffer.getLong();
+        long orderId = recordBuffer.getLong();
+        long secret = recordBuffer.getLong();
+
+        short side = recordBuffer.getShort();
+        int price = recordBuffer.getInt();
+        int quantity = recordBuffer.getInt();
+        boolean kill = recordBuffer.get() == 1;
 
         OrderEventCommand command = OrderEventCommand.fromId(commandId);
 
