@@ -10,12 +10,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-
 public class JournalReplayer {
 
     private final int recordLength;
     private final OrderEventProcessor processor;
+    private final OrderEvent replayEvent = new OrderEvent();
 
     public JournalReplayer(int recordLength, OrderEventProcessor processor) {
         this.recordLength = recordLength;
@@ -54,35 +53,34 @@ public class JournalReplayer {
         int quantity = buffer.getInt();
         boolean kill = buffer.get() == 1;
 
-        OrderEventCommand command = Arrays.stream(OrderEventCommand.values())
-                .filter(cmd -> cmd.getId() == commandId)
-                .findFirst()
-                .orElse(null);
-
-        if (command == null) throw new RuntimeException("Could not parse OrderEventCommand id " + commandId);
+        OrderEventCommand command = OrderEventCommand.fromId(commandId);
 
         if (sequence <= afterSequence) {
             return;
         }
 
-        OrderEvent orderEvent = new OrderEvent();
-
-        orderEvent.setCommand(command);
-        orderEvent.setTicker(ticker);
-        orderEvent.setOrderId(orderId);
-        orderEvent.setClientRequestId(orderEvent.getClientRequestId());
-        orderEvent.setSecret(secret);
+        replayEvent.setCommand(command);
+        replayEvent.setTicker(ticker);
+        replayEvent.setOrderId(orderId);
+        replayEvent.setClientRequestId(0);
+        replayEvent.setSecret(secret);
+        replayEvent.setChannel(null);
+        replayEvent.setSide(null);
+        replayEvent.setMarketPrice(false);
+        replayEvent.setPrice(0);
+        replayEvent.setQuantity(0);
+        replayEvent.setKill(false);
 
         if (command == OrderEventCommand.NEW) {
-            orderEvent.setSide(Side.values()[side]);
-            orderEvent.setKill(kill);
+            replayEvent.setSide(Side.fromOrdinal(side));
+            replayEvent.setKill(kill);
         }
 
         if (command != OrderEventCommand.CANCEL) {
-            orderEvent.setPrice(price);
-            orderEvent.setQuantity(quantity);
+            replayEvent.setPrice(price);
+            replayEvent.setQuantity(quantity);
         }
 
-        processor.process(orderEvent, sequence, false);
+        processor.process(replayEvent, sequence, false);
     }
 }
