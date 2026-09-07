@@ -16,8 +16,10 @@ import java.nio.file.StandardOpenOption;
 public class Journal implements Closeable {
 
     public static final int LENGTH;
+    private static final int BUFFER_SIZE = 256 * 1024;
     private FileChannel channel;
-    private final ByteBuffer buffer = ByteBuffer.allocate(64 * 1024);
+    private final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
+    private boolean hasUnforcedWrites;
     private final Path path;
     @Getter
     private final Path pendingPath;
@@ -29,7 +31,7 @@ public class Journal implements Closeable {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
-                force();
+                forceToStorage();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -63,7 +65,11 @@ public class Journal implements Closeable {
         buffer.put(event.isKill() ? (byte) 1 : 0);
     }
 
-    public void flush() throws IOException {
+    public boolean flush() throws IOException {
+        if (buffer.position() == 0) {
+            return false;
+        }
+
         buffer.flip();
 
         while (buffer.hasRemaining()) {
@@ -71,26 +77,24 @@ public class Journal implements Closeable {
         }
 
         buffer.clear();
+        hasUnforcedWrites = true;
+        return true;
     }
 
-    public void force() throws IOException {
-        force(true);
-    }
-
-    public void force(boolean forceOsWrite) throws IOException {
+    public boolean forceToStorage() throws IOException {
         flush();
 
-        if (forceOsWrite) {
-            writeBufferToOs();
+        if (!hasUnforcedWrites) {
+            return false;
         }
-    }
 
-    public void writeBufferToOs() throws IOException {
         channel.force(false);
+        hasUnforcedWrites = false;
+        return true;
     }
 
     public void rotate() throws IOException {
-        force();
+        forceToStorage();
         this.channel.close();
 
         Files.move(this.path, this.pendingPath,
@@ -126,7 +130,7 @@ public class Journal implements Closeable {
 
     @Override
     public void close() throws IOException {
-        force();
+        forceToStorage();
         channel.close();
     }
 

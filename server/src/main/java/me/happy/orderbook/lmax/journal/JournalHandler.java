@@ -16,9 +16,8 @@ public class JournalHandler implements EventHandler<OrderEvent> {
     public void onEvent(OrderEvent event, long sequence, boolean endOfBatch) throws Exception {
 
         switch (event.getCommand()) {
-            case JOURNAL_FORCE -> journal.force();
+            case JOURNAL_FORCE -> journal.forceToStorage();
             case CHECKPOINT -> {
-                journal.force();
                 journal.rotate();
             }
             case CHECKPOINT_COMPLETE -> journal.markCheckpointComplete();
@@ -26,7 +25,7 @@ public class JournalHandler implements EventHandler<OrderEvent> {
                 journal.append(event);
 
                 if (endOfBatch) {
-                    journal.force(false);
+                    journal.flush();
                 }
             }
         }
