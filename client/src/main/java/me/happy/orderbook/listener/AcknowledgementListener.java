@@ -9,7 +9,7 @@ public class AcknowledgementListener {
 
     @PacketHandler
     public void acknowledgementReceived(OrderAcknowledgementPacket packet) {
-        System.out.printf("Client ID: %d, Server ID: %d, Secret: %d\n", packet.getClientOrderId(), packet.getServerOrderId(), packet.getSecret());
+        // System.out.printf("Client ID: %d, Server ID: %d, Secret: %d\n", packet.getClientOrderId(), packet.getServerOrderId(), packet.getSecret());
 
         if (packet.getClientOrderId() == 3) {
             Client.getInstance().getServerConnection().writePacket(new OrderModifyPacket(

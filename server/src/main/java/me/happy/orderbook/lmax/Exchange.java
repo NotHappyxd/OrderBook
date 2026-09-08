@@ -36,8 +36,7 @@ public class Exchange {
 
     private static Exchange INSTANCE;
     private final int shardCount;
-    private final OrderPublisher[] publishers;
-    private final OrderEventHandler[] handlers;
+    private final ExchangeShard[] shards;
     private final TradePublisher tradePublisher;
     private final OutboundPublisher outboundPublisher;
     private final MarketDataRegistry marketDataRegistry;
@@ -48,10 +47,9 @@ public class Exchange {
         INSTANCE = this;
         WaitStrategy strategy = new TimeoutBlockingWaitStrategy(10, TimeUnit.MILLISECONDS);
         this.shardCount = shardCount;
-        this.publishers = new OrderPublisher[shardCount];
-        this.handlers = new OrderEventHandler[shardCount];
         int bufferSize = 16 * 1024;
         this.marketDataRegistry = new MarketDataRegistry();
+        this.shards = new ExchangeShard[shardCount];
 
         Disruptor<TradeEvent> tradeEventDisruptor = new Disruptor<>(TradeEvent::new, bufferSize, new NamedThreadFactory("trade"),
                 ProducerType.MULTI, strategy);
@@ -73,60 +71,29 @@ public class Exchange {
 
         for (int i = 0; i < shardCount; i++) {
             try {
-                Path path = Paths.get("logs", "shard-" + i + ".journal");
-                Path checkpointPath = Paths.get("logs", "shard-" + i + ".checkpoint");
-
-                Journal journal = new Journal(path);
-
-                Disruptor<OrderEvent> disruptor = new Disruptor<>(OrderEvent::new, bufferSize, new NamedThreadFactory("orderbook"),
-                        ProducerType.MULTI, strategy);
-                this.handlers[i] = new OrderEventHandler();
-
-                JournalHandler journalHandler = new JournalHandler(journal);
-
-                disruptor.handleEventsWith(journalHandler)
-                        .then(this.handlers[i]);
-
-                publishers[i] = new OrderPublisher(disruptor.start(), i, shardCount);
-
-                OrderEventProcessor processor = handlers[i].getProcessor();
-                processor.setCheckpointPath(checkpointPath);
-                processor.setOrderPublisher(publishers[i]);
-
-                Checkpoint.CheckpointData checkpointData = Checkpoint.load(checkpointPath);
-                processor.restoreFromCheckpoint(checkpointData);
-
-                if (checkpointData != null) {
-                    publishers[i].setSequence(checkpointData.orderIdSequence());
-                }
-
-                JournalReplayer journalReplayer = new JournalReplayer(Journal.LENGTH, handlers[i].getProcessor());
-                long checkpointSequence = checkpointData == null ? -1 : checkpointData.watermarkSequence();
-
-                if (journal.hasPendingRotation()) {
-                    journalReplayer.replay(journal.getPendingPath(), checkpointSequence);
-                }
-
-                journalReplayer.replay(path, checkpointSequence);
+                int finalI = i;
+                shards[i] = new ExchangeShard(i, shardCount, bufferSize, strategy);
 
                 checkpointScheduler.scheduleAtFixedRate(
-                        publishers[i]::processCheckpoint, 60, 60, TimeUnit.SECONDS
+                        () -> shards[finalI].getOrderPublisher().processCheckpoint(), 60, 60, TimeUnit.SECONDS
                 );
 
                 checkpointScheduler.scheduleAtFixedRate(
-                        publishers[i]::processOSWrite, 10, 10, TimeUnit.MILLISECONDS
+                        () -> shards[finalI].getOrderPublisher().processOSWrite(), 10, 10, TimeUnit.MILLISECONDS
                 );
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
+
+        System.out.println("Started all shards");
     }
 
     public OrderPublisher getPublisher(long tickerId) {
         int shard = Math.toIntExact(Math.abs(tickerId % shardCount));
 
-        return publishers[shard];
+        return shards[shard].getOrderPublisher();
     }
 
     public static Exchange getInstance() {

@@ -133,11 +133,12 @@ public class Journal implements Closeable {
     }
 
     private FileChannel open(Path path) throws IOException {
-        return FileChannel.open(path,
+        FileChannel channel = FileChannel.open(path,
                 StandardOpenOption.CREATE,
                 StandardOpenOption.READ,
-                StandardOpenOption.WRITE,
-                StandardOpenOption.APPEND);
+                StandardOpenOption.WRITE);
+        channel.position(channel.size());
+        return channel;
     }
 
     public static void verifyHeader(FileChannel channel, Path path) throws IOException {

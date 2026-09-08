@@ -26,7 +26,7 @@ public class Client {
                 TradePrintPacket.class, RebindOrderPacket.class, RebindAcknowledgePacket.class,
                 OrderStatusRequestPacket.class, OrderStatusResponsePacket.class
         );
-        this.packetManager.registerListeners(new AcknowledgementListener(), new MarketDataListener(), new ReconnectListener());
+        this.packetManager.registerListeners(new AcknowledgementListener(), /* new MarketDataListener(),*/ new ReconnectListener());
 
         this.serverConnection = new ServerConnection(this);
         this.serverConnection.connect();
@@ -38,9 +38,11 @@ public class Client {
         int clientRequestId = 2;
 
         getInstance().serverConnection.writePacket(new SubscribeMarketDataPacket("asd"));
+        long start = System.currentTimeMillis();
         for (int i = 0; i < 1_000_000; i++) {
             getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.BUY, 1, 1, ++clientRequestId));
         }
+        System.out.println("finsihed at " + (System.currentTimeMillis() - start) + " ms.");
         //getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.SELL, true, 1, 1, ++clientRequestId, false));
         Thread.sleep(1000L);
         getInstance().serverConnection.writePacket(new SnapshotRequestPacket("asd"));
