@@ -21,7 +21,7 @@ public class PriceLevel {
 
         this.tail = order;
 
-        totalQuantity += order.getQuantity();
+        this.totalQuantity += order.getQuantity();
     }
 
     public void removeOrder(Order order) {
@@ -40,6 +40,8 @@ public class PriceLevel {
         order.setPrevious(null);
         order.setNext(null);
         order.setPriceLevel(null);
+
+        this.totalQuantity -= order.getQuantity();
     }
 
     // ONLY BE USED FOR TESTING
