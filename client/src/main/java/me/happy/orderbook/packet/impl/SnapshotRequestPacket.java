@@ -14,10 +14,12 @@ import me.happy.orderbook.protocol.Protocol;
 public class SnapshotRequestPacket extends Packet {
 
     private String ticker;
+    private long clientSideRequestId;
 
     @Override
     public void write(ByteBuf buf) {
-        buf.writeLong(TickerUtils.packString(ticker));
+        buf.writeLong(TickerUtils.packString(this.ticker));
+        buf.writeLong(this.clientSideRequestId);
     }
 
     @Override

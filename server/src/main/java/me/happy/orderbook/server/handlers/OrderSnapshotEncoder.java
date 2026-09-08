@@ -13,6 +13,7 @@ public class OrderSnapshotEncoder extends MessageToByteEncoder<OrderSnapshot> {
         byteBuf.writeByte(Protocol.SNAPSHOT_RESPONSE);
         byteBuf.writeLong(snapshot.getTicker());
         byteBuf.writeLong(snapshot.getSequenceId());
+        byteBuf.writeLong(snapshot.getRequestId());
         byteBuf.writeByte(5); // Depth of orders
 
         for (int i = 0; i < 5; i++) {

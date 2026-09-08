@@ -18,6 +18,7 @@ import java.util.Map;
 public class SnapshotResponsePacket extends Packet {
 
     private long ticker;
+    private long clientSideRequestId;
     private long sequence;
     private int depth;
     private Map<Integer, Integer> bids = new HashMap<>();
@@ -32,6 +33,7 @@ public class SnapshotResponsePacket extends Packet {
     public void read(ByteBuf buf) {
         this.ticker = buf.readLong();
         this.sequence = buf.readLong();
+        this.clientSideRequestId = buf.readLong();
         this.depth = buf.readByte();
 
         for (int i = 0; i < this.depth; i++) {

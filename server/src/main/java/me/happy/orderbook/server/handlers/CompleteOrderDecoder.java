@@ -63,7 +63,8 @@ public class CompleteOrderDecoder extends SimpleChannelInboundHandler<ByteBuf> {
             }
             case Protocol.SNAPSHOT_REQUEST -> {
                 long tickerId = buffer.readLong();
-                exchange.getPublisher(tickerId).processSnapshot(tickerId, context.channel());
+                long requestId = buffer.readLong();
+                exchange.getPublisher(tickerId).processSnapshot(tickerId, requestId, context.channel());
             }
             case Protocol.ORDER_CANCEL -> {
                 long orderId = buffer.readLong();

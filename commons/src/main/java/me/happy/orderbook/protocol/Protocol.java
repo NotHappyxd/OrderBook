@@ -25,7 +25,7 @@ public final class Protocol {
     public static final byte SELL = 0x02;
 
     public static final int ORDER_ENTRY_LENGTH = Long.BYTES + 2 + (Integer.BYTES * 2) + Long.BYTES + 1;
-    public static final int SNAPSHOT_REQUEST_LENGTH = Long.BYTES;
+    public static final int SNAPSHOT_REQUEST_LENGTH = Long.BYTES * 2;
     public static final int ORDER_CANCEL_LENGTH = Long.BYTES * 4;
     public static final int ORDER_MODIFY_LENGTH = (Long.BYTES * 4) + (Integer.BYTES * 2);
     public static final int MARKET_DATA_SUBSCRIPTION_LENGTH = Long.BYTES;
@@ -35,7 +35,7 @@ public final class Protocol {
     public static final int EXECUTION_REPORT_LENGTH = (Long.BYTES * 2) + (Integer.BYTES * 3) + 1;
     public static final int MARKET_DATA_DELTA_LENGTH = (Long.BYTES * 2) + (Integer.BYTES * 2) + 1;
     public static final int TRADE_PRINT_LENGTH = (Long.BYTES * 2) + (Integer.BYTES * 2) + 1;
-    public static final int SNAPSHOT_RESPONSE_HEADER_LENGTH = (Long.BYTES * 2) + 1;
+    public static final int SNAPSHOT_RESPONSE_HEADER_LENGTH = (Long.BYTES * 3) + 1;
     public static final int SNAPSHOT_LEVEL_LENGTH = Integer.BYTES * 4;
     public static final int ORDER_ACKNOWLEDGEMENT_LENGTH = Long.BYTES * 3;
     public static final int ORDER_CANCEL_ACKNOWLEDGEMENT_LENGTH = 1 + (Long.BYTES * 2);

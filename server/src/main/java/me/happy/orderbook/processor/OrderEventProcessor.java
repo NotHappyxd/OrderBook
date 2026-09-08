@@ -46,7 +46,7 @@ public class OrderEventProcessor {
                 processOrder(event);
                 lastMutatingSequence = sequence;
             }
-            case SNAPSHOT -> processSnapshot(event, sequence);
+            case SNAPSHOT -> processSnapshot(event, event.getClientRequestId());
             case MODIFY -> {
                 processModification(event, sequence);
                 lastMutatingSequence = sequence;
@@ -154,10 +154,10 @@ public class OrderEventProcessor {
         });
     }
 
-    private void processSnapshot(OrderEvent event, long sequence) {
+    private void processSnapshot(OrderEvent event, long requestId) {
         OrderBook orderBook = orderBookMap.get(event.getTicker());
 
-        OrderSnapshot snapshot = new OrderSnapshot(event.getTicker());
+        OrderSnapshot snapshot = new OrderSnapshot(event.getTicker(), requestId);
 
         if (orderBook != null) {
             orderBook.fillSnapshot(snapshot, 5);

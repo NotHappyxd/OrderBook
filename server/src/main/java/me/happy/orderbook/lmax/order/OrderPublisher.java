@@ -47,10 +47,11 @@ public class OrderPublisher {
             event.setChannel(channel);
         });
     }
-    public void processSnapshot(long ticker, Channel channel) {
+    public void processSnapshot(long ticker, long requestId, Channel channel) {
         ringBuffer.publishEvent((event, sequence) -> {
             event.setCommand(OrderEventCommand.SNAPSHOT);
             event.setTicker(ticker);
+            event.setClientRequestId(requestId);
             event.setChannel(channel);
         });
     }

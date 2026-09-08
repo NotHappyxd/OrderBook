@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 public class OrderSnapshot {
     private final long ticker;
     private long sequenceId;
+    private final long requestId;
     private int[] asks = new int[5];
     private int[] bids = new int[5];
     private int[] asksQuantities = new int[5];

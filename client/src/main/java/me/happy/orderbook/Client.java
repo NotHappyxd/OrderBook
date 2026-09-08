@@ -46,7 +46,7 @@ public class Client {
         System.out.println("finsihed at " + (System.currentTimeMillis() - start) + " ms.");
         //getInstance().serverConnection.writePacket(new MarketOrderPacket("asd", Side.SELL, true, 1, 1, ++clientRequestId, false));
         Thread.sleep(4000L);
-        getInstance().serverConnection.writePacket(new SnapshotRequestPacket("asd"));
+        getInstance().serverConnection.writePacket(new SnapshotRequestPacket("asd", ++clientRequestId));
 
         // After a reconnect, you'd instead do something like:
         //   getInstance().serverConnection.writePacket(new RebindOrderPacket("asd", savedOrderId, savedSecret, ++clientRequestId));
