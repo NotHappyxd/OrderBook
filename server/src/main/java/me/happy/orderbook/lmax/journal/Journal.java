@@ -20,7 +20,7 @@ public class Journal implements Closeable {
     public static final int VERSION = 3;
     public static final int HEADER_LENGTH = Integer.BYTES + Integer.BYTES;
     public static final int PAYLOAD_LENGTH = Short.BYTES + Long.BYTES + Long.BYTES + Long.BYTES
-            + Long.BYTES + Short.BYTES + Integer.BYTES + Integer.BYTES + 1;
+            + Long.BYTES + Short.BYTES + Integer.BYTES + 1 + Integer.BYTES + 1;
     public static final int LENGTH = PAYLOAD_LENGTH + Integer.BYTES;
     private static final int BUFFER_SIZE = 256 * 1024;
     private FileChannel channel;
@@ -73,6 +73,7 @@ public class Journal implements Closeable {
         int price = event.getCommand() == OrderEventCommand.CANCEL ? 0 : event.getPrice();
         int quantity = event.getCommand() == OrderEventCommand.CANCEL ? 0 : event.getQuantity();
         recordBuffer.putInt(price);
+        recordBuffer.put(event.isMarketPrice() ? (byte) 1 : 0);
         recordBuffer.putInt(quantity);
         recordBuffer.put(event.isKill() ? (byte) 1 : 0);
 

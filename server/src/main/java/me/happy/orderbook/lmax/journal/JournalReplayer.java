@@ -66,6 +66,7 @@ public class JournalReplayer {
 
         short side = recordBuffer.getShort();
         int price = recordBuffer.getInt();
+        boolean marketOrder = recordBuffer.get() == 1;
         int quantity = recordBuffer.getInt();
         boolean kill = recordBuffer.get() == 1;
 
@@ -82,7 +83,7 @@ public class JournalReplayer {
         replayEvent.setSecret(secret);
         replayEvent.setChannel(null);
         replayEvent.setSide(null);
-        replayEvent.setMarketPrice(false);
+        replayEvent.setMarketPrice(marketOrder);
         replayEvent.setPrice(0);
         replayEvent.setQuantity(0);
         replayEvent.setKill(false);
