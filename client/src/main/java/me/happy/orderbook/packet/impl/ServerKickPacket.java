@@ -3,6 +3,7 @@ package me.happy.orderbook.packet.impl;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import me.happy.orderbook.protocol.ProtocolError;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
 
@@ -11,7 +12,7 @@ import me.happy.orderbook.packet.PacketId;
 @Getter
 public class ServerKickPacket extends Packet {
 
-    private KickReason kickReason;
+    private ProtocolError kickReason;
 
     @Override
     public void write(ByteBuf buf) {
@@ -20,10 +21,6 @@ public class ServerKickPacket extends Packet {
 
     @Override
     public void read(ByteBuf buf) {
-        this.kickReason = KickReason.values()[buf.readInt() - 1];
-    }
-
-    enum KickReason {
-        TOO_FEW_BYTES, TOO_MANY_BYTES
+        this.kickReason = ProtocolError.fromCode(buf.readInt());
     }
 }
