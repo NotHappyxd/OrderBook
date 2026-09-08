@@ -24,7 +24,8 @@ public class Client {
                 ServerKickPacket.class, OrderModifyPacket.class, OrderModifyAcknowledgePacket.class,
                 SubscribeMarketDataPacket.class, UnsubscribeMarketDataPacket.class, MarketDataDeltaPacket.class,
                 TradePrintPacket.class, RebindOrderPacket.class, RebindAcknowledgePacket.class,
-                OrderStatusRequestPacket.class, OrderStatusResponsePacket.class
+                OrderStatusRequestPacket.class, OrderStatusResponsePacket.class,
+                OrderCancelAcknowledgementPacket.class
         );
         this.packetManager.registerListeners(new AcknowledgementListener(), /* new MarketDataListener(),*/ new ReconnectListener());
 

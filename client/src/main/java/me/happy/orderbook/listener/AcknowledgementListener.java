@@ -22,6 +22,12 @@ public class AcknowledgementListener {
     public void acknowledgeModify(OrderModifyAcknowledgePacket packet) {
         System.out.println(packet.getClientSideRequestId());
     }
+
+    @PacketHandler
+    public void acknowledgeCancel(OrderCancelAcknowledgementPacket packet) {
+        System.out.printf("Cancel request %d for order %d: %s%n", packet.getClientRequestId(), packet.getOrderId(), packet.isSuccess() ? "accepted" : "rejected");
+    }
+
     @PacketHandler
     public void snapshotReceived(SnapshotResponsePacket packet) {
         System.out.printf("Snapshot for Ticker %d at Seq %d (Depth %d)%n", packet.getTicker(), packet.getSequence(), packet.getDepth());

@@ -19,6 +19,7 @@ public final class Protocol {
     public static final int ORDER_STATUS_REQUEST = 0x0F;
     public static final int ORDER_REBIND_ACKNOWLEDGEMENT = 0x10;
     public static final int ORDER_STATUS_RESPONSE = 0x11;
+    public static final int ORDER_CANCEL_ACKNOWLEDGEMENT = 0x12;
 
     public static final byte BUY = 0x01;
     public static final byte SELL = 0x02;
@@ -37,6 +38,7 @@ public final class Protocol {
     public static final int SNAPSHOT_RESPONSE_HEADER_LENGTH = (Long.BYTES * 2) + 1;
     public static final int SNAPSHOT_LEVEL_LENGTH = Integer.BYTES * 4;
     public static final int ORDER_ACKNOWLEDGEMENT_LENGTH = Long.BYTES * 3;
+    public static final int ORDER_CANCEL_ACKNOWLEDGEMENT_LENGTH = 1 + (Long.BYTES * 2);
     public static final int ORDER_MODIFY_ACKNOWLEDGEMENT_LENGTH = (Long.BYTES * 3) + (Integer.BYTES * 2);
     public static final int ORDER_REBIND_ACKNOWLEDGEMENT_LENGTH = 1 + (Long.BYTES * 2);
     public static final int ORDER_STATUS_RESPONSE_LENGTH = 2 + (Long.BYTES * 3) + (Integer.BYTES * 2);

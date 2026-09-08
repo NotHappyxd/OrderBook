@@ -14,6 +14,7 @@ import me.happy.orderbook.order.Order;
 import me.happy.orderbook.order.OrderSnapshot;
 import me.happy.orderbook.order.PriceLevel;
 import me.happy.orderbook.order.Side;
+import me.happy.orderbook.protocol.Protocol;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -78,14 +79,14 @@ public class OrderEventProcessor {
         Order finalOrder = order;
         boolean found = finalOrder != null;
 
-        sendBuffer(event.getChannel(), 34, 0x11, byteBuf -> {
+        sendBuffer(event.getChannel(), Protocol.ORDER_STATUS_RESPONSE_LENGTH, Protocol.ORDER_STATUS_RESPONSE, byteBuf -> {
             byteBuf.writeByte(found ? 1 : 0);
             byteBuf.writeLong(event.getClientRequestId());
             byteBuf.writeLong(event.getOrderId());
             byteBuf.writeLong(event.getTicker());
             byteBuf.writeInt(found ? finalOrder.getPrice() : 0);
             byteBuf.writeInt(found ? finalOrder.getQuantity() : 0);
-            byteBuf.writeByte(found ? (finalOrder.getSide() == Side.BUY ? 1 : 2) : 0);
+            byteBuf.writeByte(found ? (finalOrder.getSide() == Side.BUY ? Protocol.BUY : Protocol.SELL) : 0);
         });
     }
 
@@ -103,7 +104,7 @@ public class OrderEventProcessor {
         }
 
         boolean finalChanged = changed;
-        sendBuffer(event.getChannel(), 17, 0x10, byteBuf -> {
+        sendBuffer(event.getChannel(), Protocol.ORDER_REBIND_ACKNOWLEDGEMENT_LENGTH, Protocol.ORDER_REBIND_ACKNOWLEDGEMENT, byteBuf -> {
             byteBuf.writeBoolean(finalChanged);
             byteBuf.writeLong(event.getClientRequestId());
             byteBuf.writeLong(event.getOrderId());
@@ -145,7 +146,7 @@ public class OrderEventProcessor {
             orderBook.addToBook(order);
         }
 
-        sendBuffer(event.getChannel(), 32, 0x09, byteBuf -> {
+        sendBuffer(event.getChannel(), Protocol.ORDER_MODIFY_ACKNOWLEDGEMENT_LENGTH, Protocol.ORDER_MODIFY_ACKNOWLEDGEMENT, byteBuf -> {
             byteBuf.writeLong(event.getTicker());
             byteBuf.writeLong(order.getId());
             byteBuf.writeLong(event.getClientRequestId());
@@ -188,7 +189,7 @@ public class OrderEventProcessor {
         }
 
         // Acknowledge
-        sendBuffer(event.getChannel(), 32, 0x07, byteBuf -> {
+        sendBuffer(event.getChannel(), Protocol.ORDER_ACKNOWLEDGEMENT_LENGTH, Protocol.ORDER_ACKNOWLEDGEMENT, byteBuf -> {
             byteBuf.writeLong(event.getClientRequestId());
             byteBuf.writeLong(order.getId());
             byteBuf.writeLong(event.getSecret());
@@ -200,23 +201,22 @@ public class OrderEventProcessor {
     private void cancelOrder(OrderEvent event) {
         OrderBook orderBook = orderBookMap.get(event.getTicker());
 
-        if (orderBook == null) return;
+        boolean cancelled = false;
 
-        Order order = orderBook.getOrderMap().get(event.getOrderId());
+        if (orderBook != null) {
+            Order order = orderBook.getOrderMap().get(event.getOrderId());
 
-        if (order == null || order.getSecret() != event.getSecret()) return;
-
-        boolean succeeded = orderBookMap.get(event.getTicker()).cancelOrder(event.getOrderId());
-
-        // send ack
-        if (succeeded) {
-            sendBuffer(event.getChannel(), 24, 0x07, byteBuf -> {
-                byteBuf.writeByte(0x07);
-                byteBuf.writeLong(event.getClientRequestId());
-                byteBuf.writeLong(event.getOrderId());
-                byteBuf.writeLong(event.getSecret());
-            });
+            if (order != null && order.getSecret() == event.getSecret()) {
+                cancelled = orderBook.cancelOrder(event.getOrderId());
+            }
         }
+
+        boolean finalCancelled = cancelled;
+        sendBuffer(event.getChannel(), Protocol.ORDER_CANCEL_ACKNOWLEDGEMENT_LENGTH, Protocol.ORDER_CANCEL_ACKNOWLEDGEMENT, byteBuf -> {
+            byteBuf.writeBoolean(finalCancelled);
+            byteBuf.writeLong(event.getClientRequestId());
+            byteBuf.writeLong(event.getOrderId());
+        });
     }
 
     private void processCheckpoint(long sequence) {
