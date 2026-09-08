@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.group.ChannelGroup;
 import me.happy.orderbook.order.Side;
+import me.happy.orderbook.protocol.Protocol;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -36,12 +37,12 @@ public class MarketDataEventHandler implements EventHandler<MarketDataEvent> {
     }
 
     private ByteBuf encode(MarketDataEvent event) {
-        ByteBuf buf = ByteBufAllocator.DEFAULT.buffer(30);
+        ByteBuf buf = ByteBufAllocator.DEFAULT.buffer(1 + Protocol.MARKET_DATA_DELTA_LENGTH);
 
-        buf.writeByte(0x0C);
+        buf.writeByte(Protocol.MARKET_DATA_DELTA);
         buf.writeLong(event.getTicker());
         buf.writeLong(event.getSequence());
-        buf.writeByte(event.getSide() == Side.BUY ? 1 : 2);
+        buf.writeByte(event.getSide() == Side.BUY ? Protocol.BUY : Protocol.SELL);
         buf.writeInt(event.getPrice());
         buf.writeInt(event.getTotalQuantity()); // 0 == level removed
 

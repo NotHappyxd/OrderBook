@@ -6,8 +6,9 @@ import lombok.NoArgsConstructor;
 import me.happy.orderbook.order.Side;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
+import me.happy.orderbook.protocol.Protocol;
 
-@PacketId(0x0D)
+@PacketId(Protocol.TRADE_PRINT)
 @NoArgsConstructor
 @Getter
 public class TradePrintPacket extends Packet {
@@ -29,6 +30,6 @@ public class TradePrintPacket extends Packet {
         this.sequence = buf.readLong();
         this.price = buf.readInt();
         this.quantity = buf.readInt();
-        this.aggressorSide = buf.readByte() == 0x01 ? Side.BUY : Side.SELL;
+        this.aggressorSide = buf.readByte() == Protocol.BUY ? Side.BUY : Side.SELL;
     }
 }

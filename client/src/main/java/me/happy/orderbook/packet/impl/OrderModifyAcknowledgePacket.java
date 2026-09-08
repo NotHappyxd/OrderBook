@@ -6,8 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
+import me.happy.orderbook.protocol.Protocol;
 
-@PacketId(0x09)
+@PacketId(Protocol.ORDER_MODIFY_ACKNOWLEDGEMENT)
 @AllArgsConstructor
 @NoArgsConstructor
 @Data

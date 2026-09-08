@@ -7,10 +7,11 @@ import me.happy.orderbook.TickerUtils;
 import me.happy.orderbook.order.Side;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
+import me.happy.orderbook.protocol.Protocol;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@PacketId(0x05)
+@PacketId(Protocol.ORDER_CANCEL)
 public class OrderCancelPacket extends Packet {
 
     private long orderId;

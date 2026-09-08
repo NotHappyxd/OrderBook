@@ -6,8 +6,9 @@ import lombok.NoArgsConstructor;
 import me.happy.orderbook.TickerUtils;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
+import me.happy.orderbook.protocol.Protocol;
 
-@PacketId(0x0B)
+@PacketId(Protocol.MARKET_DATA_UNSUBSCRIBE)
 @AllArgsConstructor
 @NoArgsConstructor
 public class UnsubscribeMarketDataPacket extends Packet {

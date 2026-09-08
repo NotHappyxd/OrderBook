@@ -7,10 +7,11 @@ import me.happy.orderbook.TickerUtils;
 import me.happy.orderbook.order.Side;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
+import me.happy.orderbook.protocol.Protocol;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@PacketId(0x01)
+@PacketId(Protocol.ORDER_ENTRY)
 public class MarketOrderPacket extends Packet {
 
     private String tickerId;
@@ -33,7 +34,7 @@ public class MarketOrderPacket extends Packet {
     @Override
     public void write(ByteBuf buf) {
         buf.writeLong(TickerUtils.packString(tickerId));
-        buf.writeByte(side == Side.BUY ? 0x01 : 0x02);
+        buf.writeByte(side == Side.BUY ? Protocol.BUY : Protocol.SELL);
         buf.writeBoolean(marketPrice);
         buf.writeInt(price);
         buf.writeInt(quantity);

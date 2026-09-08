@@ -6,8 +6,9 @@ import lombok.NoArgsConstructor;
 import me.happy.orderbook.protocol.ProtocolError;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
+import me.happy.orderbook.protocol.Protocol;
 
-@PacketId(0x04)
+@PacketId(Protocol.SERVER_KICK)
 @NoArgsConstructor
 @Getter
 public class ServerKickPacket extends Packet {

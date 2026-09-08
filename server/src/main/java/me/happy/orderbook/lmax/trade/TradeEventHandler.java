@@ -10,6 +10,7 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import me.happy.orderbook.lmax.metadata.MarketDataRegistry;
 import me.happy.orderbook.order.Side;
+import me.happy.orderbook.protocol.Protocol;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -43,13 +44,13 @@ public class TradeEventHandler implements EventHandler<TradeEvent> {
     }
 
     public ByteBuf encodeTrade(TradeEvent event) {
-        ByteBuf buf = ByteBufAllocator.DEFAULT.buffer(26);
-        buf.writeByte(0x0D);
+        ByteBuf buf = ByteBufAllocator.DEFAULT.buffer(1 + Protocol.TRADE_PRINT_LENGTH);
+        buf.writeByte(Protocol.TRADE_PRINT);
         buf.writeLong(event.getTickerId());
         buf.writeLong(event.getSequence());
         buf.writeInt(event.getPrice());
         buf.writeInt(event.getQuantity());
-        buf.writeByte(event.getTakerSide() == Side.BUY ? 1 : 2);
+        buf.writeByte(event.getTakerSide() == Side.BUY ? Protocol.BUY : Protocol.SELL);
 
         return buf;
     }

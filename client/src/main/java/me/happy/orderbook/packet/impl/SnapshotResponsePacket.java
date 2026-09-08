@@ -6,11 +6,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
+import me.happy.orderbook.protocol.Protocol;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@PacketId(0x06)
+@PacketId(Protocol.SNAPSHOT_RESPONSE)
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

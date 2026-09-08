@@ -5,8 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
+import me.happy.orderbook.protocol.Protocol;
 
-@PacketId(0x10)
+@PacketId(Protocol.ORDER_REBIND_ACKNOWLEDGEMENT)
 @NoArgsConstructor
 @Getter
 public class RebindAcknowledgePacket extends Packet {

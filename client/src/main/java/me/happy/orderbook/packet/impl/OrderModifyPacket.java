@@ -5,8 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
+import me.happy.orderbook.protocol.Protocol;
 
-@PacketId(0x08)
+@PacketId(Protocol.ORDER_MODIFY)
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderModifyPacket extends Packet {

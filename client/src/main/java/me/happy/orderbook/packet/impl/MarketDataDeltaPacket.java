@@ -6,8 +6,9 @@ import lombok.NoArgsConstructor;
 import me.happy.orderbook.order.Side;
 import me.happy.orderbook.packet.Packet;
 import me.happy.orderbook.packet.PacketId;
+import me.happy.orderbook.protocol.Protocol;
 
-@PacketId(0x0C)
+@PacketId(Protocol.MARKET_DATA_DELTA)
 @NoArgsConstructor
 @Getter
 public class MarketDataDeltaPacket extends Packet {
@@ -27,7 +28,7 @@ public class MarketDataDeltaPacket extends Packet {
     public void read(ByteBuf buf) {
         this.tickerId = buf.readLong();
         this.sequence = buf.readLong();
-        this.side = buf.readByte() == 0x01 ? Side.BUY : Side.SELL;
+        this.side = buf.readByte() == Protocol.BUY ? Side.BUY : Side.SELL;
         this.price = buf.readInt();
         this.totalQuantity = buf.readInt();
     }
