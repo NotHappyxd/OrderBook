@@ -5,16 +5,13 @@ import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 import me.happy.orderbook.engine.OrderBook;
 import me.happy.orderbook.lmax.AllocatorPool;
-import me.happy.orderbook.lmax.metadata.MarketDataEvent;
-import me.happy.orderbook.lmax.metadata.MarketDataEventHandler;
-import me.happy.orderbook.lmax.metadata.MarketDataPublisher;
 import me.happy.orderbook.lmax.metadata.MarketDataRegistry;
+import me.happy.orderbook.lmax.metadata.PublicFeedEvent;
+import me.happy.orderbook.lmax.metadata.PublicFeedHandler;
+import me.happy.orderbook.lmax.metadata.PublicFeedPublisher;
 import me.happy.orderbook.lmax.outbound.OutboundEvent;
 import me.happy.orderbook.lmax.outbound.OutboundEventHandler;
 import me.happy.orderbook.lmax.outbound.OutboundPublisher;
-import me.happy.orderbook.lmax.trade.TradeEvent;
-import me.happy.orderbook.lmax.trade.TradeEventHandler;
-import me.happy.orderbook.lmax.trade.TradePublisher;
 import me.happy.orderbook.order.Order;
 import me.happy.orderbook.order.Side;
 
@@ -23,28 +20,23 @@ public class BenchmarkFixture {
     public final OrderBook orderBook;
     public final AllocatorPool<Order> orderAllocator;
 
-    private final Disruptor<TradeEvent> tradeDisruptor;
-    private final Disruptor<MarketDataEvent> marketDataDisruptor;
+    private final Disruptor<PublicFeedEvent> publicFeedDisruptor;
     private final Disruptor<OutboundEvent> outboundDisruptor;
 
     public BenchmarkFixture(long ticker, int ringBufferSize, int orderPoolSize) {
         MarketDataRegistry registry = new MarketDataRegistry();
 
-        this.tradeDisruptor = new Disruptor<>(TradeEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-trade"), ProducerType.MULTI, new YieldingWaitStrategy());
-        TradeEventHandler tradeEventHandler = new TradeEventHandler(registry);
-        tradeDisruptor.handleEventsWith(tradeEventHandler);
-        TradePublisher tradePublisher = new TradePublisher(tradeEventHandler, tradeDisruptor.start());
-
-        this.marketDataDisruptor = new Disruptor<>(MarketDataEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-marketdata"), ProducerType.MULTI, new YieldingWaitStrategy());
-        marketDataDisruptor.handleEventsWith(new MarketDataEventHandler(registry));
-        MarketDataPublisher marketDataPublisher = new MarketDataPublisher(marketDataDisruptor.start());
+        this.publicFeedDisruptor = new Disruptor<>(PublicFeedEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-trade"), ProducerType.MULTI, new YieldingWaitStrategy());
+        PublicFeedHandler publicFeedHandler = new PublicFeedHandler(registry);
+        publicFeedDisruptor.handleEventsWith(publicFeedHandler);
+        PublicFeedPublisher publicFeedPublisher = new PublicFeedPublisher(publicFeedDisruptor.start());
 
         this.outboundDisruptor = new Disruptor<>(OutboundEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-outbound"), ProducerType.MULTI, new YieldingWaitStrategy());
         outboundDisruptor.handleEventsWith(new OutboundEventHandler());
         OutboundPublisher outboundPublisher = new OutboundPublisher(outboundDisruptor.start());
 
         this.orderAllocator = new AllocatorPool<>(orderPoolSize, Order::new);
-        this.orderBook = new OrderBook(tradePublisher, marketDataPublisher, outboundPublisher, orderAllocator, ticker);
+        this.orderBook = new OrderBook(publicFeedPublisher, outboundPublisher, orderAllocator, ticker);
     }
 
     public Order newOrder(long id, Side side, int price, int quantity) {
@@ -74,8 +66,7 @@ public class BenchmarkFixture {
     }
 
     public void shutdown() {
-        tradeDisruptor.shutdown();
-        marketDataDisruptor.shutdown();
+        publicFeedDisruptor.shutdown();
         outboundDisruptor.shutdown();
     }
 }

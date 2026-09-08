@@ -2,13 +2,10 @@ package me.happy.orderbook.engine;
 
 import com.lmax.disruptor.RingBuffer;
 import me.happy.orderbook.lmax.AllocatorPool;
-import me.happy.orderbook.lmax.metadata.MarketDataEvent;
-import me.happy.orderbook.lmax.metadata.MarketDataPublisher;
+import me.happy.orderbook.lmax.metadata.PublicFeedEvent;
+import me.happy.orderbook.lmax.metadata.PublicFeedPublisher;
 import me.happy.orderbook.lmax.outbound.OutboundEvent;
 import me.happy.orderbook.lmax.outbound.OutboundPublisher;
-import me.happy.orderbook.lmax.trade.TradeEvent;
-import me.happy.orderbook.lmax.trade.TradeEventHandler;
-import me.happy.orderbook.lmax.trade.TradePublisher;
 import me.happy.orderbook.order.Order;
 import me.happy.orderbook.order.OrderSnapshot;
 import me.happy.orderbook.order.PriceLevel;
@@ -30,13 +27,11 @@ public class OrderBookTest {
 
     @Before
     public void setUp() {
-        RingBuffer<TradeEvent> tradeEvents = RingBuffer.createSingleProducer(TradeEvent::new, 16);
-        RingBuffer<MarketDataEvent> marketDataEvents = RingBuffer.createSingleProducer(MarketDataEvent::new, 16);
+        RingBuffer<PublicFeedEvent> publicFeedEventRingBuffer = RingBuffer.createSingleProducer(PublicFeedEvent::new, 16);
         RingBuffer<OutboundEvent> outboundEvents = RingBuffer.createSingleProducer(OutboundEvent::new, 16);
 
         book = new OrderBook(
-                new TradePublisher(new TradeEventHandler(null), tradeEvents),
-                new MarketDataPublisher(marketDataEvents),
+                new PublicFeedPublisher(publicFeedEventRingBuffer),
                 new OutboundPublisher(outboundEvents),
                 new AllocatorPool<>(16, Order::new),
                 TICKER

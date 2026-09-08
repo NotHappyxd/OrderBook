@@ -5,9 +5,8 @@ import io.netty.channel.Channel;
 import lombok.Getter;
 import lombok.Setter;
 import me.happy.orderbook.lmax.AllocatorPool;
-import me.happy.orderbook.lmax.metadata.MarketDataPublisher;
+import me.happy.orderbook.lmax.metadata.PublicFeedPublisher;
 import me.happy.orderbook.lmax.outbound.OutboundPublisher;
-import me.happy.orderbook.lmax.trade.TradePublisher;
 import me.happy.orderbook.order.Order;
 import me.happy.orderbook.order.OrderSnapshot;
 import me.happy.orderbook.order.PriceLevel;
@@ -24,8 +23,7 @@ public class OrderBook {
     private final TreeMap<Integer, PriceLevel> asks = new TreeMap<>();
     private final Map<Long, Order> orderMap = new HashMap<>();
 
-    private final TradePublisher tradePublisher;
-    private final MarketDataPublisher marketDataPublisher;
+    private final PublicFeedPublisher publicFeedPublisher;
     private final OutboundPublisher outboundPublisher;
     private final AllocatorPool<Order> orderAllocator;
     private final AllocatorPool<PriceLevel> priceLevelAllocator;
@@ -34,9 +32,8 @@ public class OrderBook {
     @Setter
     private long marketDataSequence = 0;
 
-    public OrderBook(TradePublisher tradePublisher, MarketDataPublisher marketDataPublisher, OutboundPublisher outboundPublisher, AllocatorPool<Order> orderAllocator, long ticker) {
-        this.tradePublisher = tradePublisher;
-        this.marketDataPublisher = marketDataPublisher;
+    public OrderBook(PublicFeedPublisher publicFeedPublisher, OutboundPublisher outboundPublisher, AllocatorPool<Order> orderAllocator, long ticker) {
+        this.publicFeedPublisher = publicFeedPublisher;
         this.outboundPublisher = outboundPublisher;
         this.orderAllocator = orderAllocator;
         this.priceLevelAllocator = new AllocatorPool<>(1024, PriceLevel::new);
@@ -163,7 +160,7 @@ public class OrderBook {
             sendExecutionReport(incomingOrder.getChannel(), incomingOrder, bestPrice, traded);
             sendExecutionReport(topOrder.getChannel(), topOrder, bestPrice, traded);
 
-            this.tradePublisher.publishTrade(ticker, ++marketDataSequence, bestPrice, traded, incomingOrder.getSide());
+            this.publicFeedPublisher.publishTrade(ticker, ++marketDataSequence, incomingOrder.getSide(), bestPrice, traded);
 
             topOrder = topOrder.getNext();
 
@@ -237,7 +234,7 @@ public class OrderBook {
     }
 
     public void publishLevelUpdate(Side side, int price, int totalQuantity) {
-        marketDataPublisher.publishLevelUpdate(ticker, ++marketDataSequence, side, price, totalQuantity);
+        this.publicFeedPublisher.publishDelta(this.ticker, ++this.marketDataSequence, side, price, totalQuantity);
     }
 
     public void reconcileLevel(Side side, int price) {

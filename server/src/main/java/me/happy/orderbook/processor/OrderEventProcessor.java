@@ -134,7 +134,6 @@ public class OrderEventProcessor {
             orderBook.publishLevelUpdate(order.getSide(), order.getPrice(), priceLevel.getTotalQuantity());
         } else if (order.getQuantity() < event.getQuantity() || priceChanged) {
             priceLevel.removeOrder(order);
-            priceLevel.setTotalQuantity(priceLevel.getTotalQuantity() - order.getQuantity());
 
             orderBook.reconcileLevel(order.getSide(), order.getPrice());
             if (priceChanged)
@@ -159,10 +158,10 @@ public class OrderEventProcessor {
         OrderBook orderBook = orderBookMap.get(event.getTicker());
 
         OrderSnapshot snapshot = new OrderSnapshot(event.getTicker());
-        snapshot.setSequenceId(sequence);
 
         if (orderBook != null) {
             orderBook.fillSnapshot(snapshot, 5);
+            snapshot.setSequenceId(orderBook.getMarketDataSequence());
         }
 
         Exchange.getInstance().getOutboundPublisher().publish(event.getChannel(), snapshot);
@@ -184,7 +183,7 @@ public class OrderEventProcessor {
         OrderBook orderBook = orderBookMap.get(event.getTicker());
 
         if (orderBook == null) {
-            orderBook = new OrderBook(Exchange.getInstance().getTradePublisher(), Exchange.getInstance().getMarketDataPublisher(), Exchange.getInstance().getOutboundPublisher(), this.orderAllocator, event.getTicker());
+            orderBook = new OrderBook(Exchange.getInstance().getPublicFeedPublisher(), Exchange.getInstance().getOutboundPublisher(), this.orderAllocator, event.getTicker());
             this.orderBookMap.put(event.getTicker(), orderBook);
         }
 
@@ -241,8 +240,7 @@ public class OrderEventProcessor {
 
         for (Checkpoint.TickerState tickerState : data.tickers()) {
             OrderBook orderBook = new OrderBook(
-                    Exchange.getInstance().getTradePublisher(),
-                    Exchange.getInstance().getMarketDataPublisher(),
+                    Exchange.getInstance().getPublicFeedPublisher(),
                     Exchange.getInstance().getOutboundPublisher(),
                     orderAllocator, tickerState.tickerId()
             );
