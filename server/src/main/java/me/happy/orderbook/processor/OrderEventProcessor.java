@@ -129,7 +129,7 @@ public class OrderEventProcessor {
         if (order.getQuantity() > event.getQuantity() && !priceChanged) { // User gives up liquidity, keep in place.
             int diff = event.getQuantity() - order.getQuantity();
             priceLevel.setTotalQuantity(priceLevel.getTotalQuantity() + diff);
-            order.setQuantity(order.getQuantity());
+            order.setQuantity(order.getQuantity() + diff);
 
             orderBook.publishLevelUpdate(order.getSide(), order.getPrice(), priceLevel.getTotalQuantity());
         } else if (order.getQuantity() < event.getQuantity() || priceChanged) {

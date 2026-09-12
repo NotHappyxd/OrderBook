@@ -75,7 +75,7 @@ public class OrderBook {
     public void matchBuy(Order order) {
         while (order.getQuantity() > 0 && !asks.isEmpty()) {
             Map.Entry<Integer, PriceLevel> bestEntry = asks.firstEntry();
-            int bestPrice = bestEntry.getKey();
+            Integer bestPrice = bestEntry.getKey();
 
             if (!order.isMarketPrice() && bestPrice > order.getPrice()) {
                 break;

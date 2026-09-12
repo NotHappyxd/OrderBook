@@ -23,6 +23,10 @@ public class MarketDataRegistry {
 
         if (group != null) {
             group.remove(channel);
+
+            if (group.isEmpty()) {
+                groupsByTicker.remove(ticker);
+            }
         }
     }
 

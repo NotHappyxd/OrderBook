@@ -73,7 +73,7 @@ public class Exchange {
     }
 
     public OrderPublisher getPublisher(long tickerId) {
-        int shard = Math.toIntExact(Math.abs(tickerId % shardCount));
+        int shard = Math.floorMod(tickerId, shardCount);
 
         return shards[shard].getOrderPublisher();
     }
