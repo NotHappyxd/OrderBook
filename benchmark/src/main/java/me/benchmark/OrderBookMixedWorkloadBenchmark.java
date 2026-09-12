@@ -54,30 +54,49 @@ public class OrderBookMixedWorkloadBenchmark {
     @OperationsPerInvocation(BATCH)
     public void mixedTraffic(Blackhole bh) {
         for (int i = 0; i < BATCH; i++) {
-            int roll = random.nextInt(100);
-
-            if (roll < 70) {
-                Side side = random.nextBoolean() ? Side.BUY : Side.SELL;
-                int price = side == Side.BUY
-                        ? BASE_PRICE - PRICE_SPREAD - random.nextInt(PRICE_SPREAD)
-                        : BASE_PRICE + PRICE_SPREAD + random.nextInt(PRICE_SPREAD);
-                long id = nextOrderId++;
-                boolean marketOrder = random.nextInt(1, 10) < 2;
-
-                fixture.orderBook.process(fixture.newOrder(id, side, marketOrder, price, 10));
-                if (restingIds.size() < MAX_TRACKED_RESTING_IDS) restingIds.addLast(id);
-            } else if (roll < 90) {
-                Side side = random.nextBoolean() ? Side.BUY : Side.SELL;
-                int price = side == Side.BUY ? BASE_PRICE + PRICE_SPREAD : BASE_PRICE - PRICE_SPREAD;
-                fixture.orderBook.process(fixture.newOrder(nextOrderId++, side, price, 5));
-            } else {
-                Long id = restingIds.pollFirst();
-                if (id != null) {
-                    fixture.orderBook.cancelOrder(id);
-                }
-            }
+            processNextOperation();
         }
         bh.consume(fixture.orderBook);
+    }
+
+    /**
+     * Reports per-message latency percentiles, including p99 and p99.9, in JMH's output.
+     * Keep this separate from {@link #mixedTraffic(Blackhole)}: sampling a 2,000-operation
+     * batch would report batch latency rather than the latency of one order-book action.
+     */
+    @Benchmark
+    @BenchmarkMode(Mode.SampleTime)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public void mixedTrafficLatency(Blackhole bh) {
+        processNextOperation();
+        bh.consume(fixture.orderBook);
+    }
+
+    private void processNextOperation() {
+        int roll = random.nextInt(100);
+
+        if (roll < 70) {
+            Side side = random.nextBoolean() ? Side.BUY : Side.SELL;
+            int price = side == Side.BUY
+                    ? BASE_PRICE - PRICE_SPREAD - random.nextInt(PRICE_SPREAD)
+                    : BASE_PRICE + PRICE_SPREAD + random.nextInt(PRICE_SPREAD);
+            long id = nextOrderId++;
+            boolean marketOrder = random.nextInt(1, 10) < 2;
+
+            fixture.orderBook.process(fixture.newOrder(id, side, marketOrder, price, 10));
+            if (restingIds.size() < MAX_TRACKED_RESTING_IDS) {
+                restingIds.addLast(id);
+            }
+        } else if (roll < 90) {
+            Side side = random.nextBoolean() ? Side.BUY : Side.SELL;
+            int price = side == Side.BUY ? BASE_PRICE + PRICE_SPREAD : BASE_PRICE - PRICE_SPREAD;
+            fixture.orderBook.process(fixture.newOrder(nextOrderId++, side, price, 5));
+        } else {
+            Long id = restingIds.pollFirst();
+            if (id != null) {
+                fixture.orderBook.cancelOrder(id);
+            }
+        }
     }
 
     @TearDown(Level.Trial)

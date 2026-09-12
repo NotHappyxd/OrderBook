@@ -29,6 +29,20 @@ These benchmarks are the theoretical maximums. They exclude networking (ingress/
 | `PriceLevelFifoBenchmark.churnFifo`                           | steadyDepth=1000    | 3.530 ± 0.049            | ns/op         | —        |
 | `OrderBookMixedWorkloadBenchmark.mixedTraffic`                | —                   | 7,900,690.42 ± 742,884.17 | ops/s         | —        |
 
+### Mixed-workload tail latency
+
+`OrderBookMixedWorkloadBenchmark.mixedTrafficLatency` uses JMH `SampleTime` mode and executes
+one mixed-workload action per invocation. Its result includes `p0.99` (p99) and `p0.999` (p99.9)
+in nanoseconds. Run it separately from the throughput benchmark:
+
+```sh
+java -jar benchmark/target/benchmark.jar OrderBookMixedWorkloadBenchmark.mixedTrafficLatency
+```
+
+The percentiles cover the synchronous submission path through `OrderBook.process`; they may also
+include a wait for a full Disruptor ring buffer. They do not include asynchronous socket writes or
+subscriber flush completion.
+
 ### Object pool vs. plain allocation
 
 Object pooling has more latency than plain allocation, however it has more predictable performances. Pooling results in less allocations and lot less calls to the garbage collector, further improving predictability.

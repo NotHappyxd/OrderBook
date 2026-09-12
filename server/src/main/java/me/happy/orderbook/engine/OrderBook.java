@@ -1,6 +1,8 @@
 package me.happy.orderbook.engine;
 
 import io.netty.channel.Channel;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import me.happy.orderbook.lmax.AllocatorPool;
@@ -19,7 +21,7 @@ public class OrderBook {
 
     private final TreeMap<Integer, PriceLevel> bids = new TreeMap<>(Comparator.reverseOrder());
     private final TreeMap<Integer, PriceLevel> asks = new TreeMap<>();
-    private final Map<Long, Order> orderMap = new HashMap<>();
+    private final Long2ObjectMap<Order> orderMap = new Long2ObjectOpenHashMap<>();
 
     private final PublicFeedPublisher publicFeedPublisher;
     private final OutboundPublisher outboundPublisher;

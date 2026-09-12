@@ -1,6 +1,6 @@
 package me.benchmark;
 
-import com.lmax.disruptor.YieldingWaitStrategy;
+import com.lmax.disruptor.BusySpinWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 import me.happy.orderbook.engine.OrderBook;
@@ -26,12 +26,12 @@ public class BenchmarkFixture {
     public BenchmarkFixture(long ticker, int ringBufferSize, int orderPoolSize) {
         MarketDataRegistry registry = new MarketDataRegistry();
 
-        this.publicFeedDisruptor = new Disruptor<>(PublicFeedEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-trade"), ProducerType.MULTI, new YieldingWaitStrategy());
+        this.publicFeedDisruptor = new Disruptor<>(PublicFeedEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-trade"), ProducerType.MULTI, new BusySpinWaitStrategy());
         PublicFeedHandler publicFeedHandler = new PublicFeedHandler(registry);
         publicFeedDisruptor.handleEventsWith(publicFeedHandler);
         PublicFeedPublisher publicFeedPublisher = new PublicFeedPublisher(publicFeedDisruptor.start());
 
-        this.outboundDisruptor = new Disruptor<>(OutboundEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-outbound"), ProducerType.MULTI, new YieldingWaitStrategy());
+        this.outboundDisruptor = new Disruptor<>(OutboundEvent::new, ringBufferSize, new BenchmarkThreadFactory("bench-outbound"), ProducerType.MULTI, new BusySpinWaitStrategy());
         outboundDisruptor.handleEventsWith(new OutboundEventHandler());
         OutboundPublisher outboundPublisher = new OutboundPublisher(outboundDisruptor.start());
 
