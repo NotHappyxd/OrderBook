@@ -14,7 +14,7 @@ public class OutboundEventHandler implements EventHandler<OutboundEvent> {
     private final Set<Channel> dirtyChannels = new HashSet<>();
 
     @Override
-    public void onEvent(OutboundEvent event, long sequence, boolean endOfBatch) throws Exception {
+    public void onEvent(OutboundEvent event, long sequence, boolean endOfBatch) {
         Channel channel = event.getChannel();
 
         try {

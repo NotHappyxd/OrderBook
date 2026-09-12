@@ -14,7 +14,7 @@ public class MarketDataRegistry {
 
     public void subscribe(long ticker, Channel channel) {
         groupsByTicker
-                .computeIfAbsent(ticker, t -> new DefaultChannelGroup(GlobalEventExecutor.INSTANCE))
+                .computeIfAbsent(ticker, _ -> new DefaultChannelGroup(GlobalEventExecutor.INSTANCE))
                 .add(channel);
     }
 
