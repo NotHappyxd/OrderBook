@@ -1,6 +1,5 @@
 package me.happy.orderbook.engine;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,7 +10,6 @@ import me.happy.orderbook.order.Order;
 import me.happy.orderbook.order.OrderSnapshot;
 import me.happy.orderbook.order.PriceLevel;
 import me.happy.orderbook.order.Side;
-import me.happy.orderbook.protocol.Protocol;
 
 import java.util.*;
 import java.util.function.BiPredicate;
@@ -178,17 +176,8 @@ public class OrderBook {
     private void sendExecutionReport(Channel channel, Order order, int price, int quantity) {
         if (channel == null) return;
 
-        ByteBuf buf = channel.alloc().buffer(1 + Protocol.EXECUTION_REPORT_LENGTH);
-
-        buf.writeByte(Protocol.EXECUTION_REPORT);
-        buf.writeLong(ticker);
-        buf.writeLong(order.getId());
-        buf.writeInt(price);
-        buf.writeInt(quantity); // quantity filled in this specific match
-        buf.writeInt(order.getQuantity()); // this order's remaining resting quantity
-        buf.writeByte(order.getSide() == Side.BUY ? Protocol.BUY : Protocol.SELL);
-
-        outboundPublisher.publish(channel, buf);
+        outboundPublisher.publishExecutionReport(channel, ticker, order.getId(), price, quantity,
+                order.getQuantity(), order.getSide());
     }
 
     public void fillSnapshot(OrderSnapshot snapshot, int depth) {
