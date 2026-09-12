@@ -74,6 +74,21 @@ public class OrderBookTest {
     }
 
     @Test
+    public void drainsMultipleOrdersAtOnePriceWithOneLevelUpdate() {
+        book.process(limitOrder(1L, Side.SELL, 100, 5));
+        book.process(limitOrder(2L, Side.SELL, 100, 7));
+
+        Order incomingBuy = limitOrder(3L, Side.BUY, 100, 12);
+        book.process(incomingBuy);
+
+        assertTrue(book.getAsks().isEmpty());
+        assertTrue(book.getOrderMap().isEmpty());
+        assertSame(incomingBuy, book.getOrderAllocator().borrow());
+        // Two adds, two trade prints, and one level-removal delta.
+        assertEquals(5, book.getMarketDataSequence());
+    }
+
+    @Test
     public void doesNotMatchOrdersThatDoNotCross() {
         Order sell = limitOrder(1L, Side.SELL, 100, 5);
         Order buy = limitOrder(2L, Side.BUY, 99, 5);
@@ -130,6 +145,7 @@ public class OrderBookTest {
 
         assertTrue(book.getBids().isEmpty());
         assertTrue(book.getOrderMap().isEmpty());
+        assertSame(killOrder, book.getOrderAllocator().borrow());
     }
 
     @Test
@@ -141,7 +157,7 @@ public class OrderBookTest {
         book.process(limitOrder(5L, Side.SELL, 102, 5));
         book.process(limitOrder(6L, Side.SELL, 103, 6));
 
-        OrderSnapshot snapshot = new OrderSnapshot(TICKER);
+        OrderSnapshot snapshot = new OrderSnapshot(TICKER, 1);
         book.fillSnapshot(snapshot, 2);
 
         assertEquals(101, snapshot.getBids()[0]);

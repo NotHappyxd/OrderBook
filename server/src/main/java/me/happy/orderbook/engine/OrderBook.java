@@ -49,6 +49,9 @@ public class OrderBook {
 
         if (order.getQuantity() > 0 && !order.isKill()) {
             addToBook(order);
+        }else {
+            order.reset();
+            orderAllocator.release(order);
         }
     }
 
@@ -143,6 +146,7 @@ public class OrderBook {
         Order topOrder = priceLevel.getHead();
 
         while (topOrder != null && incomingOrder.getQuantity() > 0) {
+            Order nextOrder = topOrder.getNext();
             int traded = Math.min(topOrder.getQuantity(), incomingOrder.getQuantity());
 
             topOrder.setQuantity(topOrder.getQuantity() - traded);
@@ -162,9 +166,10 @@ public class OrderBook {
 
             this.publicFeedPublisher.publishTrade(ticker, ++marketDataSequence, incomingOrder.getSide(), bestPrice, traded);
 
-            topOrder = topOrder.getNext();
+            topOrder = nextOrder;
 
             if (fullyFilledTopOrder != null) {
+                fullyFilledTopOrder.reset();
                 orderAllocator.release(fullyFilledTopOrder);
             }
         }
@@ -228,6 +233,7 @@ public class OrderBook {
         publishLevelUpdate(order.getSide(), order.getPrice(), levelEmptied ? 0 : priceLevel.getTotalQuantity());
 
         orderMap.remove(orderId);
+        order.reset();
         orderAllocator.release(order);
 
         return true;

@@ -28,6 +28,7 @@ public class CompleteOrderDecoderTest {
         ByteBuf frame = Unpooled.buffer(1 + Protocol.SNAPSHOT_REQUEST_LENGTH + 1);
         frame.writeByte(Protocol.SNAPSHOT_REQUEST);
         frame.writeLong(42L);
+        frame.writeLong(7L);
         frame.writeByte(0);
 
         assertKick(frame, ProtocolError.TOO_MANY_BYTES);

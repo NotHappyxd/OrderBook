@@ -33,11 +33,14 @@ public class Order {
         this.marketPrice = false;
         this.price = 0;
         this.quantity = 0;
+        this.secret = 0;
         this.kill = false;
 
         this.next = null;
         this.previous = null;
         this.priceLevel = null;
+
+        this.channel = null;
     }
 
     @Override

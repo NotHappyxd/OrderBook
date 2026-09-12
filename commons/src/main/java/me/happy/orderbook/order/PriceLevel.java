@@ -53,7 +53,7 @@ public class PriceLevel {
         while (current != null) {
             totalQuantity += current.getQuantity();
 
-            current = head.getNext();
+            current = current.getNext();
         }
 
         this.totalQuantity = totalQuantity;
