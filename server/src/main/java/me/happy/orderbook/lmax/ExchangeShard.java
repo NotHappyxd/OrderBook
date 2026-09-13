@@ -16,6 +16,7 @@ import me.happy.orderbook.server.NamedThreadFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Supplier;
 
 @Getter
 public class ExchangeShard {
@@ -25,7 +26,8 @@ public class ExchangeShard {
     private OrderEventHandler orderEventHandler;
     private OrderPublisher orderPublisher;
 
-    public ExchangeShard(int shardId, int shardCount, int bufferSize, WaitStrategy strategy) {
+    public ExchangeShard(int shardId, int shardCount, int bufferSize,
+                         Supplier<WaitStrategy> waitStrategyFactory) {
         this.shardId = shardId;
 
         try {
@@ -34,8 +36,9 @@ public class ExchangeShard {
 
             this.journal = new Journal(path);
 
-            Disruptor<OrderEvent> disruptor = new Disruptor<>(OrderEvent::new, bufferSize, new NamedThreadFactory("orderbook"),
-                    ProducerType.MULTI, strategy);
+            Disruptor<OrderEvent> disruptor = new Disruptor<>(OrderEvent::new, bufferSize,
+                    new NamedThreadFactory("orderbook"), ProducerType.MULTI,
+                    waitStrategyFactory.get());
             this.orderEventHandler = new OrderEventHandler();
 
             JournalHandler journalHandler = new JournalHandler(journal);

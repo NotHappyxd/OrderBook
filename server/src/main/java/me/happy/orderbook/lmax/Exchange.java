@@ -1,6 +1,7 @@
 package me.happy.orderbook.lmax;
 
-import com.lmax.disruptor.*;
+import com.lmax.disruptor.TimeoutBlockingWaitStrategy;
+import com.lmax.disruptor.WaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 import lombok.Getter;
@@ -17,6 +18,7 @@ import me.happy.orderbook.server.NamedThreadFactory;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 
 @Getter
@@ -32,20 +34,23 @@ public class Exchange {
 
     public Exchange(int shardCount) {
         INSTANCE = this;
-        WaitStrategy strategy = new TimeoutBlockingWaitStrategy(10, TimeUnit.MILLISECONDS);
+        Supplier<WaitStrategy> waitStrategyFactory =
+                () -> new TimeoutBlockingWaitStrategy(10, TimeUnit.MILLISECONDS);
         this.shardCount = shardCount;
         int bufferSize = 16 * 1024;
         this.marketDataRegistry = new MarketDataRegistry();
         this.shards = new ExchangeShard[shardCount];
 
-        Disruptor<PublicFeedEvent> publicFeedDisruptor = new Disruptor<>(PublicFeedEvent::new, bufferSize, new NamedThreadFactory("trade"),
-                ProducerType.MULTI, strategy);
+        Disruptor<PublicFeedEvent> publicFeedDisruptor = new Disruptor<>(PublicFeedEvent::new,
+                bufferSize, new NamedThreadFactory("trade"), ProducerType.MULTI,
+                waitStrategyFactory.get());
         PublicFeedHandler publicFeedHandler = new PublicFeedHandler(marketDataRegistry);
         publicFeedDisruptor.handleEventsWith(publicFeedHandler);
         this.publicFeedPublisher = new PublicFeedPublisher(publicFeedDisruptor.start());
 
-        Disruptor<OutboundEvent> outboundEventDisruptor = new Disruptor<>(OutboundEvent::new, bufferSize, new NamedThreadFactory("outbound"),
-                ProducerType.MULTI, strategy);
+        Disruptor<OutboundEvent> outboundEventDisruptor = new Disruptor<>(OutboundEvent::new,
+                bufferSize, new NamedThreadFactory("outbound"), ProducerType.MULTI,
+                waitStrategyFactory.get());
         outboundEventDisruptor.handleEventsWith(new OutboundEventHandler());
         this.outboundPublisher = new OutboundPublisher(outboundEventDisruptor.start());
 
@@ -54,7 +59,7 @@ public class Exchange {
         for (int i = 0; i < shardCount; i++) {
             try {
                 int finalI = i;
-                shards[i] = new ExchangeShard(i, shardCount, bufferSize, strategy);
+                shards[i] = new ExchangeShard(i, shardCount, bufferSize, waitStrategyFactory);
 
                 checkpointScheduler.scheduleAtFixedRate(
                         () -> shards[finalI].getOrderPublisher().processCheckpoint(), 60, 60, TimeUnit.SECONDS
@@ -74,7 +79,6 @@ public class Exchange {
 
     public OrderPublisher getPublisher(long tickerId) {
         int shard = Math.floorMod(tickerId, shardCount);
-
         return shards[shard].getOrderPublisher();
     }
 
