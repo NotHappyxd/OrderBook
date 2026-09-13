@@ -26,6 +26,7 @@ import java.util.function.Consumer;
 public class OrderEventProcessor {
 
     private final AllocatorPool<Order> orderAllocator;
+    private final AllocatorPool<PriceLevel> priceLevelAllocator;
     private final Map<Long, OrderBook> orderBookMap = new HashMap<>();
 
     @Setter
@@ -37,7 +38,8 @@ public class OrderEventProcessor {
     private long lastCheckpointedSequence = -1;
 
     public OrderEventProcessor() {
-        this.orderAllocator = new AllocatorPool<>(1024, Order::new);
+        this.orderAllocator = new AllocatorPool<>(1024, 65_536, Order::new);
+        this.priceLevelAllocator = new AllocatorPool<>(1024, 16_384, PriceLevel::new);
     }
 
     public void process(OrderEvent event, long sequence, boolean endOfBatch) {
@@ -183,7 +185,9 @@ public class OrderEventProcessor {
         OrderBook orderBook = orderBookMap.get(event.getTicker());
 
         if (orderBook == null) {
-            orderBook = new OrderBook(Exchange.getInstance().getPublicFeedPublisher(), Exchange.getInstance().getOutboundPublisher(), this.orderAllocator, event.getTicker());
+            orderBook = new OrderBook(Exchange.getInstance().getPublicFeedPublisher(),
+                    Exchange.getInstance().getOutboundPublisher(), orderAllocator,
+                    priceLevelAllocator, event.getTicker());
             this.orderBookMap.put(event.getTicker(), orderBook);
         }
 
@@ -242,7 +246,7 @@ public class OrderEventProcessor {
             OrderBook orderBook = new OrderBook(
                     Exchange.getInstance().getPublicFeedPublisher(),
                     Exchange.getInstance().getOutboundPublisher(),
-                    orderAllocator, tickerState.tickerId()
+                    orderAllocator, priceLevelAllocator, tickerState.tickerId()
             );
 
             for (Checkpoint.OrderRecord order : tickerState.orders()) {

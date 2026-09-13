@@ -32,12 +32,24 @@ public class OrderBook {
     @Setter
     private long marketDataSequence = 0;
 
-    public OrderBook(PublicFeedPublisher publicFeedPublisher, OutboundPublisher outboundPublisher, AllocatorPool<Order> orderAllocator, long ticker) {
+    public OrderBook(PublicFeedPublisher publicFeedPublisher, OutboundPublisher outboundPublisher,
+                     AllocatorPool<Order> orderAllocator, AllocatorPool<PriceLevel> priceLevelAllocator,
+                     long ticker) {
         this.publicFeedPublisher = publicFeedPublisher;
         this.outboundPublisher = outboundPublisher;
         this.orderAllocator = orderAllocator;
-        this.priceLevelAllocator = new AllocatorPool<>(1024, PriceLevel::new);
+        this.priceLevelAllocator = priceLevelAllocator;
         this.ticker = ticker;
+    }
+
+    /**
+     * Compatibility constructor for direct users of an individual order book. Production shards
+     * inject one shared price-level pool through the primary constructor above.
+     */
+    public OrderBook(PublicFeedPublisher publicFeedPublisher, OutboundPublisher outboundPublisher,
+                     AllocatorPool<Order> orderAllocator, long ticker) {
+        this(publicFeedPublisher, outboundPublisher, orderAllocator,
+                new AllocatorPool<>(0, 1024, PriceLevel::new), ticker);
     }
 
     public void process(Order order) {
