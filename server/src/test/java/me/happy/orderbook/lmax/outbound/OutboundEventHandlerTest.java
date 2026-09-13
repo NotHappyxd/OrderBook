@@ -10,6 +10,7 @@ import me.happy.orderbook.protocol.Protocol;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
 public class OutboundEventHandlerTest {
@@ -61,5 +62,27 @@ public class OutboundEventHandlerTest {
         assertEquals(OutboundEvent.Type.SNAPSHOT, event.getType());
         assertNull(event.getByteBuf());
         staleBuffer.release();
+    }
+
+    @Test
+    public void closesNonWritableChannelsAndReleasesUnwrittenBuffers() {
+        EmbeddedChannel channel = new EmbeddedChannel() {
+            @Override
+            public boolean isWritable() {
+                return false;
+            }
+        };
+        ByteBuf buffer = Unpooled.buffer().writeByte(1);
+        OutboundEvent event = new OutboundEvent();
+        event.setType(OutboundEvent.Type.BYTE_BUF);
+        event.setChannel(channel);
+        event.setByteBuf(buffer);
+
+        new OutboundEventHandler().onEvent(event, 0, true);
+
+        assertFalse(channel.isOpen());
+        assertEquals(0, buffer.refCnt());
+        assertNull(event.getChannel());
+        assertNull(event.getByteBuf());
     }
 }

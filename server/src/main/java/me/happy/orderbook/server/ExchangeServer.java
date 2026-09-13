@@ -18,6 +18,9 @@ import java.util.concurrent.TimeUnit;
 
 public class ExchangeServer {
 
+    private static final WriteBufferWaterMark CLIENT_WRITE_WATER_MARK =
+            new WriteBufferWaterMark(64 * 1024, 256 * 1024);
+
     private final int port;
 
     public ExchangeServer(int port) {
@@ -45,7 +48,8 @@ public class ExchangeServer {
                         }
                     }).option(ChannelOption.SO_BACKLOG, 128)
                     .childOption(ChannelOption.SO_KEEPALIVE, true)
-                    .childOption(ChannelOption.TCP_NODELAY, true);
+                    .childOption(ChannelOption.TCP_NODELAY, true)
+                    .childOption(ChannelOption.WRITE_BUFFER_WATER_MARK, CLIENT_WRITE_WATER_MARK);
 
             System.out.println("Exchange Server started on port " + port);
             ChannelFuture future = bootstrap.bind(port).sync();
