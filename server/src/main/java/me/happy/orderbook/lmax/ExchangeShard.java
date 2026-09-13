@@ -8,9 +8,16 @@ import me.happy.orderbook.checkpoint.Checkpoint;
 import me.happy.orderbook.lmax.journal.Journal;
 import me.happy.orderbook.lmax.journal.JournalHandler;
 import me.happy.orderbook.lmax.journal.JournalReplayer;
+import me.happy.orderbook.lmax.metadata.MarketDataRegistry;
+import me.happy.orderbook.lmax.metadata.PublicFeedEvent;
+import me.happy.orderbook.lmax.metadata.PublicFeedHandler;
+import me.happy.orderbook.lmax.metadata.PublicFeedPublisher;
 import me.happy.orderbook.lmax.order.OrderEvent;
 import me.happy.orderbook.lmax.order.OrderEventHandler;
 import me.happy.orderbook.lmax.order.OrderPublisher;
+import me.happy.orderbook.lmax.outbound.OutboundEvent;
+import me.happy.orderbook.lmax.outbound.OutboundEventHandler;
+import me.happy.orderbook.lmax.outbound.OutboundPublisher;
 import me.happy.orderbook.processor.OrderEventProcessor;
 import me.happy.orderbook.server.NamedThreadFactory;
 
@@ -25,9 +32,15 @@ public class ExchangeShard {
     private Journal journal;
     private OrderEventHandler orderEventHandler;
     private OrderPublisher orderPublisher;
+    private PublicFeedPublisher publicFeedPublisher;
+    private OutboundPublisher outboundPublisher;
+    private Disruptor<PublicFeedEvent> publicFeedDisruptor;
+    private Disruptor<OutboundEvent> outboundDisruptor;
+    private Disruptor<OrderEvent> orderDisruptor;
 
     public ExchangeShard(int shardId, int shardCount, int bufferSize,
-                         Supplier<WaitStrategy> waitStrategyFactory) {
+                         Supplier<WaitStrategy> waitStrategyFactory,
+                         MarketDataRegistry marketDataRegistry) {
         this.shardId = shardId;
 
         try {
@@ -36,19 +49,32 @@ public class ExchangeShard {
 
             this.journal = new Journal(path);
 
-            Disruptor<OrderEvent> disruptor = new Disruptor<>(OrderEvent::new, bufferSize,
-                    new NamedThreadFactory("orderbook"), ProducerType.MULTI,
+            this.publicFeedDisruptor = new Disruptor<>(PublicFeedEvent::new, bufferSize,
+                    new NamedThreadFactory("trade-" + shardId), ProducerType.SINGLE,
                     waitStrategyFactory.get());
-            this.orderEventHandler = new OrderEventHandler();
+            this.publicFeedDisruptor.handleEventsWith(new PublicFeedHandler(marketDataRegistry));
+            this.publicFeedPublisher = new PublicFeedPublisher(this.publicFeedDisruptor.start());
+
+            this.outboundDisruptor = new Disruptor<>(OutboundEvent::new, bufferSize,
+                    new NamedThreadFactory("outbound-" + shardId), ProducerType.SINGLE,
+                    waitStrategyFactory.get());
+            this.outboundDisruptor.handleEventsWith(new OutboundEventHandler());
+            this.outboundPublisher = new OutboundPublisher(this.outboundDisruptor.start());
+
+            OrderEventProcessor processor = new OrderEventProcessor(publicFeedPublisher, outboundPublisher);
+
+            this.orderDisruptor = new Disruptor<>(OrderEvent::new, bufferSize,
+                    new NamedThreadFactory("orderbook-" + shardId), ProducerType.MULTI,
+                    waitStrategyFactory.get());
+            this.orderEventHandler = new OrderEventHandler(processor);
 
             JournalHandler journalHandler = new JournalHandler(journal);
 
-            disruptor.handleEventsWith(journalHandler)
+            orderDisruptor.handleEventsWith(journalHandler)
                     .then(this.orderEventHandler);
 
-            this.orderPublisher = new OrderPublisher(disruptor.start(), shardId, shardCount);
+            this.orderPublisher = new OrderPublisher(orderDisruptor.start(), shardId, shardCount);
 
-            OrderEventProcessor processor = this.orderEventHandler.getProcessor();
             processor.setCheckpointPath(checkpointPath);
             processor.setOrderPublisher(this.orderPublisher);
 

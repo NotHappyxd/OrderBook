@@ -8,7 +8,11 @@ import me.happy.orderbook.processor.OrderEventProcessor;
 @Getter
 public class OrderEventHandler implements EventHandler<OrderEvent> {
 
-    private final OrderEventProcessor processor = new OrderEventProcessor();
+    private final OrderEventProcessor processor;
+
+    public OrderEventHandler(OrderEventProcessor processor) {
+        this.processor = processor;
+    }
 
     @Override
     public void onEvent(OrderEvent event, long sequence, boolean endOfBatch) {

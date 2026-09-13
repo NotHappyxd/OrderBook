@@ -2,16 +2,10 @@ package me.happy.orderbook.lmax;
 
 import com.lmax.disruptor.TimeoutBlockingWaitStrategy;
 import com.lmax.disruptor.WaitStrategy;
-import com.lmax.disruptor.dsl.Disruptor;
-import com.lmax.disruptor.dsl.ProducerType;
 import lombok.Getter;
 import me.happy.orderbook.lmax.metadata.MarketDataRegistry;
-import me.happy.orderbook.lmax.metadata.PublicFeedEvent;
-import me.happy.orderbook.lmax.metadata.PublicFeedHandler;
 import me.happy.orderbook.lmax.metadata.PublicFeedPublisher;
 import me.happy.orderbook.lmax.order.OrderPublisher;
-import me.happy.orderbook.lmax.outbound.OutboundEvent;
-import me.happy.orderbook.lmax.outbound.OutboundEventHandler;
 import me.happy.orderbook.lmax.outbound.OutboundPublisher;
 import me.happy.orderbook.server.NamedThreadFactory;
 
@@ -27,9 +21,7 @@ public class Exchange {
     private static Exchange INSTANCE;
     private final int shardCount;
     private final ExchangeShard[] shards;
-    private final OutboundPublisher outboundPublisher;
     private final MarketDataRegistry marketDataRegistry;
-    private final PublicFeedPublisher publicFeedPublisher;
     private final ScheduledExecutorService checkpointScheduler;
 
     public Exchange(int shardCount) {
@@ -41,25 +33,13 @@ public class Exchange {
         this.marketDataRegistry = new MarketDataRegistry();
         this.shards = new ExchangeShard[shardCount];
 
-        Disruptor<PublicFeedEvent> publicFeedDisruptor = new Disruptor<>(PublicFeedEvent::new,
-                bufferSize, new NamedThreadFactory("trade"), ProducerType.MULTI,
-                waitStrategyFactory.get());
-        PublicFeedHandler publicFeedHandler = new PublicFeedHandler(marketDataRegistry);
-        publicFeedDisruptor.handleEventsWith(publicFeedHandler);
-        this.publicFeedPublisher = new PublicFeedPublisher(publicFeedDisruptor.start());
-
-        Disruptor<OutboundEvent> outboundEventDisruptor = new Disruptor<>(OutboundEvent::new,
-                bufferSize, new NamedThreadFactory("outbound"), ProducerType.MULTI,
-                waitStrategyFactory.get());
-        outboundEventDisruptor.handleEventsWith(new OutboundEventHandler());
-        this.outboundPublisher = new OutboundPublisher(outboundEventDisruptor.start());
-
         this.checkpointScheduler = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("checkpoint-timer"));
 
         for (int i = 0; i < shardCount; i++) {
             try {
                 int finalI = i;
-                shards[i] = new ExchangeShard(i, shardCount, bufferSize, waitStrategyFactory);
+                shards[i] = new ExchangeShard(i, shardCount, bufferSize,
+                        waitStrategyFactory, marketDataRegistry);
 
                 checkpointScheduler.scheduleAtFixedRate(
                         () -> shards[finalI].getOrderPublisher().processCheckpoint(), 60, 60, TimeUnit.SECONDS
@@ -78,8 +58,19 @@ public class Exchange {
     }
 
     public OrderPublisher getPublisher(long tickerId) {
-        int shard = Math.floorMod(tickerId, shardCount);
-        return shards[shard].getOrderPublisher();
+        return shardFor(tickerId).getOrderPublisher();
+    }
+
+    public OutboundPublisher getOutboundPublisher(long tickerId) {
+        return shardFor(tickerId).getOutboundPublisher();
+    }
+
+    public PublicFeedPublisher getPublicFeedPublisher(long tickerId) {
+        return shardFor(tickerId).getPublicFeedPublisher();
+    }
+
+    private ExchangeShard shardFor(long tickerId) {
+        return shards[Math.floorMod(tickerId, shardCount)];
     }
 
     public static Exchange getInstance() {

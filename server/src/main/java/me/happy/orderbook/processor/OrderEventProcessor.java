@@ -7,9 +7,10 @@ import lombok.Setter;
 import me.happy.orderbook.checkpoint.Checkpoint;
 import me.happy.orderbook.engine.OrderBook;
 import me.happy.orderbook.lmax.AllocatorPool;
-import me.happy.orderbook.lmax.Exchange;
+import me.happy.orderbook.lmax.metadata.PublicFeedPublisher;
 import me.happy.orderbook.lmax.order.OrderEvent;
 import me.happy.orderbook.lmax.order.OrderPublisher;
+import me.happy.orderbook.lmax.outbound.OutboundPublisher;
 import me.happy.orderbook.order.Order;
 import me.happy.orderbook.order.OrderSnapshot;
 import me.happy.orderbook.order.PriceLevel;
@@ -27,6 +28,8 @@ public class OrderEventProcessor {
 
     private final AllocatorPool<Order> orderAllocator;
     private final AllocatorPool<PriceLevel> priceLevelAllocator;
+    private final PublicFeedPublisher publicFeedPublisher;
+    private final OutboundPublisher outboundPublisher;
     private final Map<Long, OrderBook> orderBookMap = new HashMap<>();
 
     @Setter
@@ -37,7 +40,10 @@ public class OrderEventProcessor {
     private long lastMutatingSequence = 0;
     private long lastCheckpointedSequence = -1;
 
-    public OrderEventProcessor() {
+    public OrderEventProcessor(PublicFeedPublisher publicFeedPublisher,
+                               OutboundPublisher outboundPublisher) {
+        this.publicFeedPublisher = publicFeedPublisher;
+        this.outboundPublisher = outboundPublisher;
         this.orderAllocator = new AllocatorPool<>(1024, 65_536, Order::new);
         this.priceLevelAllocator = new AllocatorPool<>(1024, 16_384, PriceLevel::new);
     }
@@ -166,7 +172,7 @@ public class OrderEventProcessor {
             snapshot.setSequenceId(orderBook.getMarketDataSequence());
         }
 
-        Exchange.getInstance().getOutboundPublisher().publish(event.getChannel(), snapshot);
+        outboundPublisher.publish(event.getChannel(), snapshot);
     }
 
     private void processOrder(OrderEvent event) {
@@ -185,8 +191,7 @@ public class OrderEventProcessor {
         OrderBook orderBook = orderBookMap.get(event.getTicker());
 
         if (orderBook == null) {
-            orderBook = new OrderBook(Exchange.getInstance().getPublicFeedPublisher(),
-                    Exchange.getInstance().getOutboundPublisher(), orderAllocator,
+            orderBook = new OrderBook(publicFeedPublisher, outboundPublisher, orderAllocator,
                     priceLevelAllocator, event.getTicker());
             this.orderBookMap.put(event.getTicker(), orderBook);
         }
@@ -244,8 +249,8 @@ public class OrderEventProcessor {
 
         for (Checkpoint.TickerState tickerState : data.tickers()) {
             OrderBook orderBook = new OrderBook(
-                    Exchange.getInstance().getPublicFeedPublisher(),
-                    Exchange.getInstance().getOutboundPublisher(),
+                    publicFeedPublisher,
+                    outboundPublisher,
                     orderAllocator, priceLevelAllocator, tickerState.tickerId()
             );
 
@@ -268,7 +273,7 @@ public class OrderEventProcessor {
 
         payload.accept(byteBuf);
 
-        Exchange.getInstance().getOutboundPublisher().publish(channel, byteBuf);
+        outboundPublisher.publish(channel, byteBuf);
     }
 
     public OrderBook getOrderBook(long ticker) {
